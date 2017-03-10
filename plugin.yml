@@ -1,0 +1,6 @@
+name: ActionHealth
+main: com.zeshanaslam.actionhealth.Main
+version: 5.0
+commands:
+  Actionhealth:
+    description: Reloads the plugin
