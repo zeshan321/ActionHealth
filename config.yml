@@ -4,11 +4,11 @@
 # {maxhealth} shows the max health of the mob or player.
 # {usestyle} will use the defined chars.
 
-Health Message: '&6&l{name}: &a&l{health} / {maxhealth}'
+Health Message: '&7&l{name}: {usestyle}'
 
 # Strip Name.
 
-Strip Name: false
+Strip Name: true
 
 # If enabled players with the permission 'ActionHealth.Health' will only see the action health message.
 
@@ -49,3 +49,6 @@ Region PvP: true
 
 # When set to true and style health is enabled this will limit the health symbols to 10.
 Limit Health: true
+
+# Saves players /actionhealth toggle state.
+Remember Toggle: true

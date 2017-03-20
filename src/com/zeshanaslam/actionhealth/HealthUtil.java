@@ -1,7 +1,12 @@
 package com.zeshanaslam.actionhealth;
 
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -14,11 +19,68 @@ public class HealthUtil {
         this.plugin = plugin;
     }
 
-    private void sendActionBar(Player player, String message) {
-        if (player.hasMetadata("NPC")) {
-            return;
+    public void sendHealth(Player player, LivingEntity entity, double health) {
+        String name;
+        double maxHealth = entity.getMaxHealth();
+
+        if (entity.getCustomName() == null) {
+            name = entity.getName();
+        } else {
+            name = entity.getCustomName();
         }
 
+        if (plugin.settingsManager.stripName) name = ChatColor.stripColor(name);
+        if (plugin.settingsManager.translate.containsKey(entity.getName()))
+            name = plugin.settingsManager.translate.get(entity.getName());
+
+        String output = plugin.settingsManager.healthMessage;
+        output = output.replace("{name}", name);
+        output = output.replace("{health}", String.valueOf(health));
+        output = output.replace("{maxhealth}", String.valueOf(maxHealth));
+
+        if (output.contains("{usestyle}")) {
+            String style = "";
+            int left = 10;
+            double heart = maxHealth / 10;
+            double tempHealth = health;
+
+            if (maxHealth != health && health >= 0 && !entity.isDead()) {
+                for (int i = 0; i < 10; i++) {
+                    if (tempHealth - heart > 0) {
+                        tempHealth = tempHealth - heart;
+
+                        style = style + plugin.settingsManager.filledHeartIcon;
+                        left--;
+                    }
+                }
+
+                if (tempHealth >= 0) {
+                    style = style + plugin.settingsManager.halfHeartIcon;
+                    left--;
+                }
+            }
+
+            for (int i = 0; i < left; i++) {
+                style = style + plugin.settingsManager.emptyHeartIcon;
+            }
+
+            output = output.replace("{usestyle}", style);
+        }
+
+        if (plugin.settingsManager.delay) {
+            String finalOutput = output;
+
+            new BukkitRunnable() {
+                public void run() {
+                    sendActionBar(player, finalOutput);
+                }
+            }.runTaskLater(plugin, 1L);
+        } else {
+            sendActionBar(player, output);
+        }
+    }
+
+    private void sendActionBar(Player player, String message) {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
@@ -50,5 +112,20 @@ public class HealthUtil {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    public boolean isDisabled(Location location) {
+        if (plugin.worldGuardPlugin == null) {
+            return false;
+        }
+
+        ApplicableRegionSet applicableRegions = plugin.worldGuardPlugin.getRegionManager(location.getWorld()).getApplicableRegions(location);
+        for (ProtectedRegion region : applicableRegions) {
+            if (plugin.settingsManager.regions.contains(region.getId())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
