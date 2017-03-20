@@ -14,7 +14,6 @@ public class SettingsManager {
     public boolean showPlayers;
     public boolean delay;
     public boolean checkPvP;
-    public boolean limitHealth;
     public boolean stripName;
     public boolean rememberToggle;
     public String filledHeartIcon;
@@ -34,7 +33,6 @@ public class SettingsManager {
         showPlayers = plugin.getConfig().getBoolean("Show Player");
         delay = plugin.getConfig().getBoolean("Delay Message");
         checkPvP = plugin.getConfig().getBoolean("Region PvP");
-        limitHealth = plugin.getConfig().getBoolean("Limit Health");
         stripName = plugin.getConfig().getBoolean("Strip Name");
         filledHeartIcon = plugin.getConfig().getString("Full Health Icon");
         halfHeartIcon = plugin.getConfig().getString("Half Health Icon");

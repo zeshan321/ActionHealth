@@ -33,8 +33,7 @@ public class Main extends JavaPlugin {
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
-
-
+        
         // Register command
         getCommand("Actionhealth").setExecutor(new HealthCommand(this));
 
