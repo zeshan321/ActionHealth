@@ -56,8 +56,8 @@ public class HealthUtil {
         if (output.contains("{usestyle}")) {
             String style = "";
             int left = 10;
-            double heart = maxHealth / 10;
-            double tempHealth = health;
+            int heart = maxHealth / 10;
+            int tempHealth = health;
 
             if (maxHealth != health && health >= 0 && !entity.isDead()) {
                 for (int i = 0; i < 10; i++) {
