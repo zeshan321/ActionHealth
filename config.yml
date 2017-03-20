@@ -51,4 +51,4 @@ Region PvP: true
 Limit Health: true
 
 # Saves players /actionhealth toggle state.
-Remember Toggle: true
+Remember Toggle: false
