@@ -39,18 +39,18 @@ public class FileHandler {
         this.load();
     }
 
+    public static boolean fileExists(String path) {
+        File file = new File(path);
+
+        return file.exists();
+    }
+
     public String getName() {
         return file.getName();
     }
 
     public String getPath() {
         return file.getPath();
-    }
-
-    public static boolean fileExists(String path) {
-        File file = new File(path);
-
-        return file.exists();
     }
 
     private void load() {

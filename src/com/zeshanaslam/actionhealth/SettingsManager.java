@@ -5,7 +5,6 @@ import org.bukkit.Bukkit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 public class SettingsManager {
 
