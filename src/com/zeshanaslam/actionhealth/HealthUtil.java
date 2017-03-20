@@ -19,9 +19,24 @@ public class HealthUtil {
         this.plugin = plugin;
     }
 
-    public void sendHealth(Player player, LivingEntity entity, double health) {
+    public void sendHealth(Player player, LivingEntity entity, int health) {
+        if (plugin.settingsManager.delay) {
+
+            new BukkitRunnable() {
+                public void run() {
+                    sendActionBar(player, getOutput((int) entity.getHealth(), entity));
+                }
+            }.runTaskLater(plugin, 1L);
+        } else {
+            sendActionBar(player, getOutput(Math.round(health), entity));
+        }
+    }
+
+    private String getOutput(int health, LivingEntity entity) {
         String name;
-        double maxHealth = entity.getMaxHealth();
+        int maxHealth = (int) entity.getMaxHealth();
+
+        if (health < 0) health = 0;
 
         if (entity.getCustomName() == null) {
             name = entity.getName();
@@ -67,17 +82,7 @@ public class HealthUtil {
             output = output.replace("{usestyle}", style);
         }
 
-        if (plugin.settingsManager.delay) {
-            String finalOutput = output;
-
-            new BukkitRunnable() {
-                public void run() {
-                    sendActionBar(player, finalOutput);
-                }
-            }.runTaskLater(plugin, 1L);
-        } else {
-            sendActionBar(player, output);
-        }
+        return output;
     }
 
     private void sendActionBar(Player player, String message) {
