@@ -36,7 +36,7 @@ public class HealthUtil {
         String name;
         int maxHealth = (int) entity.getMaxHealth();
 
-        if (health < 0) health = 0;
+        if (health < 0 || entity.isDead()) health = 0;
 
         if (entity.getCustomName() == null) {
             name = entity.getName();
@@ -69,7 +69,7 @@ public class HealthUtil {
                     }
                 }
 
-                if (tempHealth >= 0) {
+                if (tempHealth > 0) {
                     style = style + plugin.settingsManager.halfHeartIcon;
                     left--;
                 }
