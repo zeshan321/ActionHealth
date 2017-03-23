@@ -19,7 +19,7 @@ public class HealthUtil {
         this.plugin = plugin;
     }
 
-    public void sendHealth(Player player, LivingEntity entity, int health) {
+    public void sendHealth(Player player, LivingEntity entity, double health) {
         if (plugin.settingsManager.delay) {
 
             new BukkitRunnable() {
@@ -28,15 +28,15 @@ public class HealthUtil {
                 }
             }.runTaskLater(plugin, 1L);
         } else {
-            sendActionBar(player, getOutput(Math.round(health), entity));
+            sendActionBar(player, getOutput(health, entity));
         }
     }
 
-    private String getOutput(int health, LivingEntity entity) {
+    private String getOutput(double health, LivingEntity entity) {
         String name;
-        int maxHealth = (int) entity.getMaxHealth();
+        double maxHealth = entity.getMaxHealth();
 
-        if (health < 0 || entity.isDead()) health = 0;
+        if (health < 0.0 || entity.isDead()) health = 0.0;
 
         if (entity.getCustomName() == null) {
             name = entity.getName();
@@ -56,10 +56,11 @@ public class HealthUtil {
         if (output.contains("{usestyle}")) {
             String style = "";
             int left = 10;
-            int heart = maxHealth / 10;
-            int halfHeart = heart / 2;
-            int tempHealth = health;
+            double heart = maxHealth / 10;
+            double halfHeart = heart / 2;
+            double tempHealth = health;
 
+            System.out.println(health + " " + tempHealth + " " + heart + " " + halfHeart);
             if (maxHealth != health && health >= 0 && !entity.isDead()) {
                 for (int i = 0; i < 10; i++) {
                     if (tempHealth - heart > 0) {
@@ -67,6 +68,8 @@ public class HealthUtil {
 
                         style = style + plugin.settingsManager.filledHeartIcon;
                         left--;
+                    } else {
+                        break;
                     }
                 }
 
@@ -114,14 +117,16 @@ public class HealthUtil {
                 ppoc = c4.getConstructor(new Class<?>[]{c3, byte.class}).newInstance(o, (byte) 2);
             }
 
-            Method m1 = c1.getDeclaredMethod("getHandle");
-            Object h = m1.invoke(p);
-            Field f1 = h.getClass().getDeclaredField("playerConnection");
-            Object pc = f1.get(h);
-            Method m5 = pc.getClass().getDeclaredMethod("sendPacket", c5);
-            m5.invoke(pc, ppoc);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            Method getHandle = c1.getDeclaredMethod("getHandle");
+            Object handle = getHandle.invoke(p);
+
+            Field fieldConnection = handle.getClass().getDeclaredField("playerConnection");
+            Object playerConnection = fieldConnection.get(handle);
+
+            Method sendPacket = playerConnection.getClass().getDeclaredMethod("sendPacket", c5);
+            sendPacket.invoke(playerConnection, ppoc);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

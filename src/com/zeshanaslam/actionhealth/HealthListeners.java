@@ -64,7 +64,7 @@ public class HealthListeners implements Listener {
                 // Send health
                 if (damaged instanceof LivingEntity) {
                     LivingEntity livingEntity = (LivingEntity) damaged;
-                    plugin.healthUtil.sendHealth(player, (LivingEntity) damaged, (int) (livingEntity.getHealth() - event.getFinalDamage()));
+                    plugin.healthUtil.sendHealth(player, (LivingEntity) damaged, livingEntity.getHealth() - event.getFinalDamage());
                 }
             }
         }
@@ -94,7 +94,7 @@ public class HealthListeners implements Listener {
             // Send health
             if (damaged instanceof LivingEntity) {
                 LivingEntity livingEntity = (LivingEntity) damaged;
-                plugin.healthUtil.sendHealth(player, (LivingEntity) damaged, (int) (livingEntity.getHealth() - event.getFinalDamage()));
+                plugin.healthUtil.sendHealth(player, (LivingEntity) damaged, livingEntity.getHealth() - event.getFinalDamage());
             }
         }
     }
