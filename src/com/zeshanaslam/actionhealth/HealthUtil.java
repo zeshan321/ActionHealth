@@ -60,7 +60,6 @@ public class HealthUtil {
             double halfHeart = heart / 2;
             double tempHealth = health;
 
-            System.out.println(health + " " + tempHealth + " " + heart + " " + halfHeart);
             if (maxHealth != health && health >= 0 && !entity.isDead()) {
                 for (int i = 0; i < 10; i++) {
                     if (tempHealth - heart > 0) {
@@ -76,11 +75,9 @@ public class HealthUtil {
                 if (tempHealth > halfHeart) {
                     style = style + plugin.settingsManager.filledHeartIcon;
                     left--;
-                } else {
-                    if (tempHealth > 0 && tempHealth <= halfHeart) {
-                        style = style + plugin.settingsManager.halfHeartIcon;
-                        left--;
-                    }
+                } else if (tempHealth > 0 && tempHealth <= halfHeart) {
+                    style = style + plugin.settingsManager.halfHeartIcon;
+                    left--;
                 }
             }
 
