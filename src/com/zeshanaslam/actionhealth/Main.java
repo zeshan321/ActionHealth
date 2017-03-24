@@ -14,6 +14,7 @@ public class Main extends JavaPlugin {
     public SettingsManager settingsManager;
     public WorldGuardPlugin worldGuardPlugin;
     public HealthUtil healthUtil;
+    public int taskID = -1;
 
     public List<UUID> toggle = new ArrayList<>();
 
@@ -33,7 +34,7 @@ public class Main extends JavaPlugin {
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
-        
+
         // Register command
         getCommand("Actionhealth").setExecutor(new HealthCommand(this));
 

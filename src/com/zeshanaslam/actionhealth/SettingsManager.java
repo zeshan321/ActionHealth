@@ -1,10 +1,13 @@
 package com.zeshanaslam.actionhealth;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SettingsManager {
 
@@ -22,11 +25,22 @@ public class SettingsManager {
     public List<String> worlds = new ArrayList<>();
     public HashMap<String, String> translate = new HashMap<>();
     public List<String> regions = new ArrayList<>();
-
     public String mcVersion;
     public boolean useOldMethods;
+    public boolean showOnLook;
+    public double lookDistance;
+    public List<String> blacklist = new ArrayList<>();
+    public String toggleMessage;
 
     public SettingsManager(Main plugin) {
+        // Clear settings for reloads
+        worlds.clear();
+        regions.clear();
+        blacklist.clear();
+
+        if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
+
+        // Get settings from config
         healthMessage = plugin.getConfig().getString("Health Message");
         usePerms = plugin.getConfig().getBoolean("Use Permissions");
         showMobs = plugin.getConfig().getBoolean("Show Mob");
@@ -59,6 +73,28 @@ public class SettingsManager {
             rememberToggle = plugin.getConfig().getBoolean("Remember Toggle");
         } else {
             rememberToggle = false;
+        }
+
+        // New options
+        if (plugin.getConfig().contains("Blacklist")) {
+            blacklist.addAll(plugin.getConfig().getStringList("Blacklist").stream().map(s -> ChatColor.translateAlternateColorCodes('&', s)).collect(Collectors.toList()));
+        }
+
+        if (plugin.getConfig().contains("Show On Look")) {
+            showOnLook = plugin.getConfig().getBoolean("Show On Look");
+            lookDistance = plugin.getConfig().getDouble("Look Distance");
+
+            if (showOnLook) {
+                BukkitTask bukkitTask = new LookThread(plugin).runTaskTimerAsynchronously(plugin, 0, 20);
+                plugin.taskID = bukkitTask.getTaskId();
+            }
+        } else {
+            plugin.taskID = -1;
+            showOnLook = false;
+        }
+
+        if (plugin.getConfig().contains("Toggle Message")) {
+            toggleMessage = plugin.getConfig().getString("Toggle Message");
         }
     }
 }

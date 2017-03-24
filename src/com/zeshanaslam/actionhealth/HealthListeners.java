@@ -39,6 +39,9 @@ public class HealthListeners implements Listener {
 
 
         Entity damaged = event.getEntity();
+        if (event.getDamager().getUniqueId() == damaged.getUniqueId()) {
+            return;
+        }
 
         if (event.getDamager() instanceof Projectile) {
             Projectile projectile = (Projectile) event.getDamager();
@@ -58,13 +61,16 @@ public class HealthListeners implements Listener {
                 }
 
                 if (plugin.toggle.contains(player.getUniqueId())) {
+                    if (plugin.settingsManager.toggleMessage != null && !plugin.settingsManager.toggleMessage.equals("")) {
+                        plugin.healthUtil.sendActionBar(player, plugin.settingsManager.toggleMessage.replace("{name}", player.getName()));
+                    }
                     return;
                 }
 
                 // Send health
                 if (damaged instanceof LivingEntity) {
                     LivingEntity livingEntity = (LivingEntity) damaged;
-                    plugin.healthUtil.sendHealth(player, (LivingEntity) damaged, livingEntity.getHealth() - event.getFinalDamage());
+                    plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
                 }
             }
         }
@@ -94,12 +100,12 @@ public class HealthListeners implements Listener {
             // Send health
             if (damaged instanceof LivingEntity) {
                 LivingEntity livingEntity = (LivingEntity) damaged;
-                plugin.healthUtil.sendHealth(player, (LivingEntity) damaged, livingEntity.getHealth() - event.getFinalDamage());
+                plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
             }
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
@@ -112,7 +118,7 @@ public class HealthListeners implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onLeave(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 

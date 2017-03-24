@@ -24,11 +24,17 @@ public class HealthUtil {
 
             new BukkitRunnable() {
                 public void run() {
-                    sendActionBar(player, getOutput((int) entity.getHealth(), entity));
+                    String output = getOutput(entity.getHealth(), entity);
+
+                    if (output != null)
+                        sendActionBar(player, output);
                 }
             }.runTaskLater(plugin, 1L);
         } else {
-            sendActionBar(player, getOutput(health, entity));
+            String output = getOutput(health, entity);
+
+            if (output != null)
+                sendActionBar(player, output);
         }
     }
 
@@ -43,6 +49,8 @@ public class HealthUtil {
         } else {
             name = entity.getCustomName();
         }
+
+        if (plugin.settingsManager.blacklist.contains(name)) return null;
 
         if (plugin.settingsManager.stripName) name = ChatColor.stripColor(name);
         if (plugin.settingsManager.translate.containsKey(entity.getName()))
@@ -81,8 +89,14 @@ public class HealthUtil {
                 }
             }
 
-            for (int i = 0; i < left; i++) {
-                style = style + plugin.settingsManager.emptyHeartIcon;
+            if (maxHealth != health) {
+                for (int i = 0; i < left; i++) {
+                    style = style + plugin.settingsManager.emptyHeartIcon;
+                }
+            } else {
+                for (int i = 0; i < left; i++) {
+                    style = style + plugin.settingsManager.filledHeartIcon;
+                }
             }
 
             output = output.replace("{usestyle}", style);
@@ -91,7 +105,7 @@ public class HealthUtil {
         return output;
     }
 
-    private void sendActionBar(Player player, String message) {
+    public void sendActionBar(Player player, String message) {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {

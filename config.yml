@@ -6,6 +6,10 @@
 
 Health Message: '&7&l{name}: {usestyle}'
 
+# The message the player is sent to the player if they have actionhealth disabled.
+# {name} shows the name of the player.
+Toggle Message: ''
+
 # Strip Name.
 
 Strip Name: true
@@ -52,3 +56,11 @@ Limit Health: true
 
 # Saves players /actionhealth toggle state.
 Remember Toggle: false
+
+# Blacklist by entity name or entity display name.
+Blacklist:
+- 'CCPD Officer'
+
+# Show the health of the entity that the player is looking at.
+Show On Look: false
+Look Distance: 10
