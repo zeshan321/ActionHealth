@@ -39,10 +39,6 @@ public class HealthListeners implements Listener {
 
 
         Entity damaged = event.getEntity();
-        if (event.getDamager().getUniqueId() == damaged.getUniqueId()) {
-            return;
-        }
-
         if (event.getDamager() instanceof Projectile) {
             Projectile projectile = (Projectile) event.getDamager();
 
@@ -57,6 +53,10 @@ public class HealthListeners implements Listener {
                 }
 
                 if (!plugin.settingsManager.showMobs) {
+                    return;
+                }
+
+                if (player.getUniqueId() == damaged.getUniqueId()) {
                     return;
                 }
 
@@ -78,6 +78,10 @@ public class HealthListeners implements Listener {
         if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
 
+            if (player.getUniqueId() == damaged.getUniqueId()) {
+                return;
+            }
+
             // Check if the setting 'Show Player' is enabled
             if (event.getEntity() instanceof Player) {
                 if (!plugin.settingsManager.showPlayers) {
@@ -94,6 +98,9 @@ public class HealthListeners implements Listener {
             }
 
             if (plugin.toggle.contains(player.getUniqueId())) {
+                if (plugin.settingsManager.toggleMessage != null && !plugin.settingsManager.toggleMessage.equals("")) {
+                    plugin.healthUtil.sendActionBar(player, plugin.settingsManager.toggleMessage.replace("{name}", player.getName()));
+                }
                 return;
             }
 

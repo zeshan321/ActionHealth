@@ -39,11 +39,11 @@ public class HealthCommand implements CommandExecutor {
                     if (plugin.toggle.contains(player.getUniqueId())) {
                         plugin.toggle.remove(player.getUniqueId());
 
-                        player.sendMessage(ChatColor.GRAY + "ActionHealth has been " + ChatColor.RED + "enabled" + ChatColor.GRAY + ".");
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.settingsManager.enableMessage).replace("{name}", player.getName()));
                     } else {
                         plugin.toggle.add(player.getUniqueId());
 
-                        player.sendMessage(ChatColor.GRAY + "ActionHealth has been " + ChatColor.RED + "disabled" + ChatColor.GRAY + ".");
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.settingsManager.disableMessage).replace("{name}", player.getName()));
                     }
 
                     if (plugin.settingsManager.rememberToggle) {

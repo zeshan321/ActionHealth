@@ -31,6 +31,8 @@ public class SettingsManager {
     public double lookDistance;
     public List<String> blacklist = new ArrayList<>();
     public String toggleMessage;
+    public String enableMessage;
+    public String disableMessage;
 
     public SettingsManager(Main plugin) {
         // Clear settings for reloads
@@ -95,6 +97,18 @@ public class SettingsManager {
 
         if (plugin.getConfig().contains("Toggle Message")) {
             toggleMessage = plugin.getConfig().getString("Toggle Message");
+        }
+
+        if (plugin.getConfig().contains("On Enable")) {
+            enableMessage = plugin.getConfig().getString("On Enable");
+        } else {
+            enableMessage = "&7ActionHealth has been &cenabled&7.";
+        }
+
+        if (plugin.getConfig().contains("On Disable")) {
+            disableMessage = plugin.getConfig().getString("On Disable");
+        } else {
+            disableMessage = "&7ActionHealth has been &cdisabled&7.";
         }
     }
 }

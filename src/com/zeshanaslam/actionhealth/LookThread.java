@@ -37,7 +37,7 @@ public class LookThread extends BukkitRunnable {
                     name = livingEntity.getCustomName();
                 }
 
-                if (!plugin.settingsManager.blacklist.contains(name)) {
+                if (!plugin.settingsManager.blacklist.contains(name) && !livingEntity.hasMetadata("NPC")) {
                     plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth());
                 }
             }

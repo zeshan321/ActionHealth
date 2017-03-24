@@ -3,32 +3,34 @@
 # {health} shows current health of the mob or player.
 # {maxhealth} shows the max health of the mob or player.
 # {usestyle} will use the defined chars.
-
 Health Message: '&7&l{name}: {usestyle}'
 
 # The message the player is sent to the player if they have actionhealth disabled.
 # {name} shows the name of the player.
 Toggle Message: ''
 
-# Strip Name.
+# Message sent to player when player enables actionhealth
+# {name} shows the name of the player.
+On Enable: '&7ActionHealth has been &cenabled&7.'
 
+# Message sent to player when player disables actionhealth
+# {name} shows the name of the player.
+On Disable: '&7ActionHealth has been &cdisabled&7.'
+
+# Strip Name.
 Strip Name: true
 
 # If enabled players with the permission 'ActionHealth.Health' will only see the action health message.
-
 Use Permissions: false
 
 # If set to false player will not see health messages from mobs.
-
 Show Mob: true
 
 # If set to false player will not see health messages from other players.
 
 Show Player: true
-
 # If set to true player will get the message in a delay to get 100% accurate health. Useful for plugins that add damage by reading item lore.
 # This also uses more resources :(
-
 Delay Message: false
 
 # Style Health
