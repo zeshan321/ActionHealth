@@ -58,8 +58,8 @@ public class HealthUtil {
 
         String output = plugin.settingsManager.healthMessage;
         output = output.replace("{name}", name);
-        output = output.replace("{health}", String.valueOf(health));
-        output = output.replace("{maxhealth}", String.valueOf(maxHealth));
+        output = output.replace("{health}", String.valueOf((int) health));
+        output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
 
         if (output.contains("{usestyle}")) {
             String style = "";

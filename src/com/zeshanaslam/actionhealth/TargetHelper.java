@@ -2,12 +2,16 @@ package com.zeshanaslam.actionhealth;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>Helper class for getting targets using various methods</p>
@@ -284,5 +288,46 @@ public class TargetHelper {
             temp.setY(temp.getBlockY() + 1);
             return temp;
         }
+    }
+
+    public static Block getTarget(Location from, int distance, byte... transparentTypeIds) {
+        if (transparentTypeIds.length == 0) {
+            return getTarget(from, distance, (Set<Byte>) null);
+        } else {
+            Set<Byte> types = new HashSet<>(transparentTypeIds.length);
+            for (byte b : transparentTypeIds) types.add(b);
+            return getTarget(from, distance, types);
+        }
+    }
+
+    public static Block getTarget(Location from, int distance, Set<Byte> transparentTypeIds) {
+        BlockIterator itr = new BlockIterator(from, 0, distance);
+        while (itr.hasNext()) {
+            Block block = itr.next();
+            int id = block.getTypeId();
+            if (transparentTypeIds == null) {
+                if (id == 0) continue;
+            } else if (transparentTypeIds.contains((byte) id)) {
+                continue;
+            }
+            return block;
+        }
+        return null;
+    }
+
+    public static Block getTarget(LivingEntity from, int distance, Set<Byte> transparentTypeIds) {
+        return getTarget(from.getEyeLocation(), distance, transparentTypeIds);
+    }
+
+    public static Block getTarget(LivingEntity from, int distance, byte... transparentTypeIds) {
+        return getTarget(from.getEyeLocation(), distance, transparentTypeIds);
+    }
+
+    public static boolean canSee(LivingEntity from, Location to, Set<Byte> transparentTypeIds) {
+        return getTarget(from, (int) Math.ceil(from.getLocation().distance(to)), transparentTypeIds) == null;
+    }
+
+    public static boolean canSee(LivingEntity from, Location to, byte... transparentTypeIds) {
+        return getTarget(from, (int) Math.ceil(from.getLocation().distance(to)), transparentTypeIds) == null;
     }
 }

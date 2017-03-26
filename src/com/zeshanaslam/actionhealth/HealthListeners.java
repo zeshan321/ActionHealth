@@ -39,6 +39,8 @@ public class HealthListeners implements Listener {
 
 
         Entity damaged = event.getEntity();
+        if (damaged.getType().name().equals("ARMOR_STAND")) return;
+
         if (event.getDamager() instanceof Projectile) {
             Projectile projectile = (Projectile) event.getDamager();
 
