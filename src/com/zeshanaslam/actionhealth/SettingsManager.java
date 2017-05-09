@@ -44,7 +44,7 @@ public class SettingsManager {
         if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
 
         // Check if using MVdWPlaceholderAPI
-        placeholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI ");
+        placeholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI");
 
         // Get settings from config
         healthMessage = plugin.getConfig().getString("Health Message");
