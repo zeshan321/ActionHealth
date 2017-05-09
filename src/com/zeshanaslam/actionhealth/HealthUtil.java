@@ -1,5 +1,6 @@
 package com.zeshanaslam.actionhealth;
 
+import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.ChatColor;
@@ -19,26 +20,26 @@ public class HealthUtil {
         this.plugin = plugin;
     }
 
-    public void sendHealth(Player player, LivingEntity entity, double health) {
+    public void sendHealth(Player receiver, LivingEntity entity, double health) {
         if (plugin.settingsManager.delay) {
 
             new BukkitRunnable() {
                 public void run() {
-                    String output = getOutput(entity.getHealth(), entity);
+                    String output = getOutput(entity.getHealth(), receiver, entity);
 
                     if (output != null)
-                        sendActionBar(player, output);
+                        sendActionBar(receiver, output);
                 }
             }.runTaskLater(plugin, 1L);
         } else {
-            String output = getOutput(health, entity);
+            String output = getOutput(health, receiver, entity);
 
             if (output != null)
-                sendActionBar(player, output);
+                sendActionBar(receiver, output);
         }
     }
 
-    private String getOutput(double health, LivingEntity entity) {
+    private String getOutput(double health, Player receiver, LivingEntity entity) {
         String name;
         double maxHealth = entity.getMaxHealth();
 
@@ -60,6 +61,19 @@ public class HealthUtil {
         output = output.replace("{name}", name);
         output = output.replace("{health}", String.valueOf((int) health));
         output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
+
+        if (entity instanceof Player) {
+            String displayName;
+            Player player = (Player) entity;
+
+            if (player.getDisplayName() == null) {
+                displayName = name;
+            } else {
+                displayName = player.getDisplayName();
+            }
+
+            output = output.replace("{displayname}", displayName);
+        }
 
         if (output.contains("{usestyle}")) {
             String style = "";
@@ -100,6 +114,10 @@ public class HealthUtil {
             }
 
             output = output.replace("{usestyle}", style);
+        }
+
+        if (plugin.settingsManager.placeholderAPI) {
+            output = PlaceholderAPI.replacePlaceholders(receiver, output);
         }
 
         return output;

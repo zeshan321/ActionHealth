@@ -33,6 +33,7 @@ public class SettingsManager {
     public String toggleMessage;
     public String enableMessage;
     public String disableMessage;
+    public boolean placeholderAPI;
 
     public SettingsManager(Main plugin) {
         // Clear settings for reloads
@@ -41,6 +42,9 @@ public class SettingsManager {
         blacklist.clear();
 
         if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
+
+        // Check if using MVdWPlaceholderAPI
+        placeholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI ");
 
         // Get settings from config
         healthMessage = plugin.getConfig().getString("Health Message");

@@ -40,7 +40,7 @@ public class LookThread extends BukkitRunnable {
             List<LivingEntity> entities = TargetHelper.getLivingTargets(player, plugin.settingsManager.lookDistance);
 
             if (!entities.isEmpty()) {
-                for (LivingEntity livingEntity: entities) {
+                for (LivingEntity livingEntity : entities) {
                     if (livingEntity.getType().name().equals("ARMOR_STAND")) continue;
 
                     String name;
