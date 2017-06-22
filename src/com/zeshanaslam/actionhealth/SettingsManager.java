@@ -19,6 +19,9 @@ public class SettingsManager {
     public boolean checkPvP;
     public boolean stripName;
     public boolean rememberToggle;
+    public boolean canSee;
+    public boolean invisiblePotion;
+    public boolean spectatorMode;
     public String filledHeartIcon;
     public String halfHeartIcon;
     public String emptyHeartIcon;
@@ -40,6 +43,7 @@ public class SettingsManager {
         worlds.clear();
         regions.clear();
         blacklist.clear();
+        translate.clear();
 
         if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
 
@@ -113,6 +117,24 @@ public class SettingsManager {
             disableMessage = plugin.getConfig().getString("On Disable");
         } else {
             disableMessage = "&7ActionHealth has been &cdisabled&7.";
+        }
+
+        if (plugin.getConfig().contains("Can See")) {
+            canSee = plugin.getConfig().getBoolean("Can See");
+        } else {
+            canSee = true;
+        }
+
+        if (plugin.getConfig().contains("Invisible Potion")) {
+            invisiblePotion = plugin.getConfig().getBoolean("Invisible Potion");
+        } else {
+            invisiblePotion = true;
+        }
+
+        if (plugin.getConfig().contains("Spectator Mode")) {
+            spectatorMode = plugin.getConfig().getBoolean("Spectator Mode");
+        } else {
+            spectatorMode = true;
         }
     }
 }

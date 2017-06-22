@@ -40,9 +40,9 @@ Half Health Icon: "&c\u2764"
 Empty Health Icon: "&7\u2764"
 
 # Set names. Case sensitive!
-Name Change: false
+Name Change: true
 Name:
-- Cow = Kuh
+- SNOWMAN = Snow Golem
 
 # ActionHealth will be disabled for any world names added below. Case sensitive!
 Disabled worlds:
@@ -67,3 +67,9 @@ Blacklist:
 # Show the health of the entity that the player is looking at.
 Show On Look: false
 Look Distance: 10
+
+# Check if player can see entity before sending health.
+Can See: true
+
+# Hide if action health if entity has invisible potion on.
+Invisible Potion: true

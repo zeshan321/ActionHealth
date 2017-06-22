@@ -4,9 +4,11 @@ import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Field;
@@ -21,6 +23,35 @@ public class HealthUtil {
     }
 
     public void sendHealth(Player receiver, LivingEntity entity, double health) {
+        if (plugin.settingsManager.canSee) {
+
+            if (entity instanceof Player) {
+                Player player = (Player) entity;
+
+                if (!receiver.canSee(player)) {
+                    return;
+                }
+            }
+        }
+
+        if (plugin.settingsManager.spectatorMode) {
+
+            if (entity instanceof Player) {
+                Player player = (Player) entity;
+
+                // Using string version for older versions
+                if (player.getGameMode().name().equals("SPECTATOR")) {
+                    return;
+                }
+            }
+        }
+
+        if (plugin.settingsManager.invisiblePotion) {
+            if (entity.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                return;
+            }
+        }
+
         if (plugin.settingsManager.delay) {
 
             new BukkitRunnable() {
@@ -53,6 +84,7 @@ public class HealthUtil {
 
         if (plugin.settingsManager.blacklist.contains(name)) return null;
 
+        System.out.println(entity.getName());
         if (plugin.settingsManager.stripName) name = ChatColor.stripColor(name);
         if (plugin.settingsManager.translate.containsKey(entity.getName()))
             name = plugin.settingsManager.translate.get(entity.getName());
