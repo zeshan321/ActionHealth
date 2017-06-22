@@ -71,5 +71,5 @@ Look Distance: 10
 # Check if player can see entity before sending health.
 Can See: true
 
-# Hide if action health if entity has invisible potion on.
+# Hide action health if entity has invisible potion on.
 Invisible Potion: true
