@@ -40,9 +40,9 @@ Half Health Icon: "&c\u2764"
 Empty Health Icon: "&7\u2764"
 
 # Set names. Case sensitive!
-Name Change: true
+Name Change: false
 Name:
-- SNOWMAN = Snow Golem
+- Snow Golem = New name
 
 # ActionHealth will be disabled for any world names added below. Case sensitive!
 Disabled worlds:
