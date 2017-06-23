@@ -83,7 +83,6 @@ public class HealthUtil {
 
         if (plugin.settingsManager.blacklist.contains(name)) return null;
 
-        System.out.println(entity.getName());
         if (plugin.settingsManager.stripName) name = ChatColor.stripColor(name);
         if (plugin.settingsManager.translate.containsKey(entity.getName()))
             name = plugin.settingsManager.translate.get(entity.getName());

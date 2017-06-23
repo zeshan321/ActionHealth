@@ -73,3 +73,6 @@ Can See: true
 
 # Hide action health if entity has invisible potion on.
 Invisible Potion: true
+
+# Hide if entity is in spectator mode.
+Spectator Mode: true
