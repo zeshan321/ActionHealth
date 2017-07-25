@@ -108,18 +108,18 @@ public class HealthUtil {
         }
 
         if (output.contains("{usestyle}")) {
-            String style = "";
-            int left = 10;
-            double heart = maxHealth / 10;
+            StringBuilder style = new StringBuilder();
+            int left = plugin.settingsManager.limitHealth;
+            double heart = maxHealth / plugin.settingsManager.limitHealth;
             double halfHeart = heart / 2;
             double tempHealth = health;
 
             if (maxHealth != health && health >= 0 && !entity.isDead()) {
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < plugin.settingsManager.limitHealth; i++) {
                     if (tempHealth - heart > 0) {
                         tempHealth = tempHealth - heart;
 
-                        style = style + plugin.settingsManager.filledHeartIcon;
+                        style.append(plugin.settingsManager.filledHeartIcon);
                         left--;
                     } else {
                         break;
@@ -127,25 +127,25 @@ public class HealthUtil {
                 }
 
                 if (tempHealth > halfHeart) {
-                    style = style + plugin.settingsManager.filledHeartIcon;
+                    style.append(plugin.settingsManager.filledHeartIcon);
                     left--;
                 } else if (tempHealth > 0 && tempHealth <= halfHeart) {
-                    style = style + plugin.settingsManager.halfHeartIcon;
+                    style.append(plugin.settingsManager.halfHeartIcon);
                     left--;
                 }
             }
 
             if (maxHealth != health) {
                 for (int i = 0; i < left; i++) {
-                    style = style + plugin.settingsManager.emptyHeartIcon;
+                    style.append(plugin.settingsManager.emptyHeartIcon);
                 }
             } else {
                 for (int i = 0; i < left; i++) {
-                    style = style + plugin.settingsManager.filledHeartIcon;
+                    style.append(plugin.settingsManager.filledHeartIcon);
                 }
             }
 
-            output = output.replace("{usestyle}", style);
+            output = output.replace("{usestyle}", style.toString());
         }
 
         if (plugin.settingsManager.placeholderAPI) {

@@ -37,6 +37,7 @@ public class SettingsManager {
     public String enableMessage;
     public String disableMessage;
     public boolean placeholderAPI;
+    public int limitHealth;
 
     public SettingsManager(Main plugin) {
         // Clear settings for reloads
@@ -135,6 +136,14 @@ public class SettingsManager {
             spectatorMode = plugin.getConfig().getBoolean("Spectator Mode");
         } else {
             spectatorMode = true;
+        }
+
+        if (plugin.getConfig().contains("Limit Health")) {
+            if (plugin.getConfig().isBoolean("Limit Health")) {
+                limitHealth = 10;
+            } else {
+                limitHealth = plugin.getConfig().getInt("Limit Health");
+            }
         }
     }
 }

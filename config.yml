@@ -54,8 +54,8 @@ Disabled regions:
 # Disable ActionHealth in regions where PvP is denied.
 Region PvP: true
 
-# When set to true and style health is enabled this will limit the health symbols to 10.
-Limit Health: true
+# Limits the health style to a certain amount of symbols.
+Limit Health: 10
 
 # Saves players /actionhealth toggle state.
 Remember Toggle: false
