@@ -38,8 +38,8 @@ public class HealthUtil {
             if (entity instanceof Player) {
                 Player player = (Player) entity;
 
-                // Using string version for older versions
-                if (player.getGameMode().name().equals("SPECTATOR")) {
+                // Using string version for older versions. Checking for gamemode is null because of fake player npcs.
+                if (player.getGameMode() != null && player.getGameMode().name().equals("SPECTATOR")) {
                     return;
                 }
             }
