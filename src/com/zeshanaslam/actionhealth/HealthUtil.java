@@ -3,6 +3,7 @@ package com.zeshanaslam.actionhealth;
 import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
@@ -103,6 +104,15 @@ public class HealthUtil {
             }
 
             output = output.replace("{displayname}", displayName);
+
+            // Placeholder apis
+            if (plugin.settingsManager.hasMVdWPlaceholderAPI) {
+                output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(player, output);
+            }
+
+            if (plugin.settingsManager.hasPlaceholderAPI) {
+                output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
+            }
         } else {
             output = output.replace("{displayname}", name);
         }
@@ -146,10 +156,6 @@ public class HealthUtil {
             }
 
             output = output.replace("{usestyle}", style.toString());
-        }
-
-        if (plugin.settingsManager.placeholderAPI) {
-            output = PlaceholderAPI.replacePlaceholders(receiver, output);
         }
 
         return output;

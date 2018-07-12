@@ -4,6 +4,7 @@
 # {maxhealth} shows the max health of the mob or player.
 # {usestyle} will use the defined chars.
 # {displayname} will use player/mob custom name.
+# Has support for PlaceholderAPI and MVdWPlaceholderAPI.
 Health Message: '&7&l{name}: {usestyle}'
 
 # The message the player is sent to the player if they have actionhealth disabled.

@@ -36,7 +36,8 @@ public class SettingsManager {
     public String toggleMessage;
     public String enableMessage;
     public String disableMessage;
-    public boolean placeholderAPI;
+    public boolean hasMVdWPlaceholderAPI;
+    public boolean hasPlaceholderAPI;
     public int limitHealth;
 
     public SettingsManager(Main plugin) {
@@ -49,7 +50,10 @@ public class SettingsManager {
         if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
 
         // Check if using MVdWPlaceholderAPI
-        placeholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI");
+        hasMVdWPlaceholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI");
+
+        // Check if using placeholderAPI
+        hasPlaceholderAPI = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
 
         // Get settings from config
         healthMessage = plugin.getConfig().getString("Health Message");
