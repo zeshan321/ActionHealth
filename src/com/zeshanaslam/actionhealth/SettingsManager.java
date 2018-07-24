@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 public class SettingsManager {
 
     public String healthMessage;
+    public String healthMessageOther;
     public boolean usePerms;
     public boolean showMobs;
     public boolean showPlayers;
@@ -57,6 +58,12 @@ public class SettingsManager {
 
         // Get settings from config
         healthMessage = plugin.getConfig().getString("Health Message");
+
+        healthMessageOther = "";
+        if (plugin.getConfig().contains("Non Player Message")) {
+            healthMessageOther = plugin.getConfig().getString("Non Player Message");
+        }
+
         usePerms = plugin.getConfig().getBoolean("Use Permissions");
         showMobs = plugin.getConfig().getBoolean("Show Mob");
         showPlayers = plugin.getConfig().getBoolean("Show Player");

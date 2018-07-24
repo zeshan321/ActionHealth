@@ -89,9 +89,6 @@ public class HealthUtil {
             name = plugin.settingsManager.translate.get(entity.getName());
 
         String output = plugin.settingsManager.healthMessage;
-        output = output.replace("{name}", name);
-        output = output.replace("{health}", String.valueOf((int) health));
-        output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
 
         if (entity instanceof Player) {
             String displayName;
@@ -114,8 +111,16 @@ public class HealthUtil {
                 output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
             }
         } else {
+            if (!plugin.settingsManager.healthMessageOther.isEmpty()) {
+                output = plugin.settingsManager.healthMessageOther;
+            }
+
             output = output.replace("{displayname}", name);
         }
+
+        output = output.replace("{name}", name);
+        output = output.replace("{health}", String.valueOf((int) health));
+        output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
 
         if (output.contains("{usestyle}")) {
             StringBuilder style = new StringBuilder();
@@ -165,7 +170,7 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.settingsManager.mcVersion.equals("v1_12_R1")) {
+            if (plugin.settingsManager.mcVersion.equals("v1_12_R1") || plugin.settingsManager.mcVersion.equals("v1_13_R1")) {
                 new PreAction(player, message);
             } else if (!(plugin.settingsManager.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.settingsManager.mcVersion.contains("v1_7_")))) {
                 Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.settingsManager.mcVersion + ".entity.CraftPlayer");

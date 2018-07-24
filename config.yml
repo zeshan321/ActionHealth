@@ -7,6 +7,11 @@
 # Has support for PlaceholderAPI and MVdWPlaceholderAPI.
 Health Message: '&7&l{name}: {usestyle}'
 
+# If set empty it will default to the one above.
+# This message is sent to all non player entities.
+# All the placeholders from above work here also.
+Non Player Message: ''
+
 # The message the player is sent to the player if they have actionhealth disabled.
 # {name} shows the name of the player.
 Toggle Message: ''
