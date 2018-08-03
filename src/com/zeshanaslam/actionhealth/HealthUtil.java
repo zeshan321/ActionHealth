@@ -109,6 +109,7 @@ public class HealthUtil {
 
             if (plugin.settingsManager.hasPlaceholderAPI) {
                 output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
+                output = me.clip.placeholderapi.PlaceholderAPI.setRelationalPlaceholders(receiver, player, output);
             }
         } else {
             if (!plugin.settingsManager.healthMessageOther.isEmpty()) {
