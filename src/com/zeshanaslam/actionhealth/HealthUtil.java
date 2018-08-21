@@ -3,6 +3,7 @@ package com.zeshanaslam.actionhealth;
 import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -225,10 +226,13 @@ public class HealthUtil {
             return false;
         }
 
-        ApplicableRegionSet applicableRegions = plugin.worldGuardPlugin.getRegionManager(location.getWorld()).getApplicableRegions(location);
-        for (ProtectedRegion region : applicableRegions) {
-            if (plugin.settingsManager.regions.contains(region.getId())) {
-                return true;
+        // Temp until WG 7 API is available for 1.13
+        if (!plugin.settingsManager.mcVersion.equals("v1_13_R1")) {
+            ApplicableRegionSet applicableRegions = plugin.worldGuardPlugin.getRegionManager(location.getWorld()).getApplicableRegions(location);
+            for (ProtectedRegion region : applicableRegions) {
+                if (plugin.settingsManager.regions.contains(region.getId())) {
+                    return true;
+                }
             }
         }
 
