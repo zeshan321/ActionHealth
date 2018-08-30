@@ -1,10 +1,7 @@
 package com.zeshanaslam.actionhealth;
 
-import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
@@ -172,7 +169,7 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.settingsManager.mcVersion.equals("v1_12_R1") || plugin.settingsManager.mcVersion.equals("v1_13_R1")) {
+            if (plugin.settingsManager.mcVersion.equals("v1_12_R1") || plugin.settingsManager.mcVersion.startsWith("v1_13")) {
                 new PreAction(player, message);
             } else if (!(plugin.settingsManager.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.settingsManager.mcVersion.contains("v1_7_")))) {
                 Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.settingsManager.mcVersion + ".entity.CraftPlayer");
@@ -226,13 +223,10 @@ public class HealthUtil {
             return false;
         }
 
-        // Temp until WG 7 API is available for 1.13
-        if (!plugin.settingsManager.mcVersion.equals("v1_13_R1")) {
-            ApplicableRegionSet applicableRegions = plugin.worldGuardPlugin.getRegionManager(location.getWorld()).getApplicableRegions(location);
-            for (ProtectedRegion region : applicableRegions) {
-                if (plugin.settingsManager.regions.contains(region.getId())) {
-                    return true;
-                }
+        ApplicableRegionSet applicableRegions = plugin.worldGuardPlugin.getRegionManager(location.getWorld()).getApplicableRegions(location);
+        for (ProtectedRegion region : applicableRegions) {
+            if (plugin.settingsManager.regions.contains(region.getId())) {
+                return true;
             }
         }
 
