@@ -1,7 +1,7 @@
 name: ActionHealth
 main: com.zeshanaslam.actionhealth.Main
-version: 3.2.6
-softdepend: [PlaceholderAPI, MVdWPlaceholderAPI]
+version: 3.2.7
+softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, WorldGuard]
 commands:
   Actionhealth:
     description: Actionhealth main command.

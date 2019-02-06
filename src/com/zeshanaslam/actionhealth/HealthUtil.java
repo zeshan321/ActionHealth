@@ -1,7 +1,10 @@
 package com.zeshanaslam.actionhealth;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
@@ -223,8 +226,11 @@ public class HealthUtil {
             return false;
         }
 
-        ApplicableRegionSet applicableRegions = plugin.worldGuardPlugin.getRegionManager(location.getWorld()).getApplicableRegions(location);
+        RegionContainer regionContainer = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
+        RegionQuery regionQuery = regionContainer.createQuery();
+        ApplicableRegionSet applicableRegions = regionQuery.getApplicableRegions(BukkitAdapter.adapt(location));
         for (ProtectedRegion region : applicableRegions) {
+            System.out.println(region.getId());
             if (plugin.settingsManager.regions.contains(region.getId())) {
                 return true;
             }

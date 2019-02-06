@@ -236,7 +236,7 @@ public class TargetHelper {
         Location temp = loc1.clone();
         for (int i = 0; i < steps; i++) {
             temp.add(slope);
-            if (temp.getBlock().getType().isSolid() && temp.getBlock().getType() != Material.IRON_FENCE && !temp.getBlock().getType().toString().contains("GLASS")) {
+            if (temp.getBlock().getType().isSolid() && temp.getBlock().getType() != Material.LEGACY_IRON_FENCE && !temp.getBlock().getType().toString().contains("GLASS")) {
                 return true;
             }
         }
@@ -304,7 +304,7 @@ public class TargetHelper {
         BlockIterator itr = new BlockIterator(from, 0, distance);
         while (itr.hasNext()) {
             Block block = itr.next();
-            int id = block.getTypeId();
+            int id = block.getType().getId();
             if (transparentTypeIds == null) {
                 if (id == 0) continue;
             } else if (transparentTypeIds.contains((byte) id)) {
