@@ -236,7 +236,7 @@ public class TargetHelper {
         Location temp = loc1.clone();
         for (int i = 0; i < steps; i++) {
             temp.add(slope);
-            if (temp.getBlock().getType().isSolid() && temp.getBlock().getType() != Material.LEGACY_IRON_FENCE && !temp.getBlock().getType().toString().contains("GLASS")) {
+            if (temp.getBlock().getType().isSolid() && !temp.getBlock().getType().toString().contains("FENCE") && !temp.getBlock().getType().toString().contains("GLASS")) {
                 return true;
             }
         }
