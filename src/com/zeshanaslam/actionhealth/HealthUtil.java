@@ -172,7 +172,7 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.settingsManager.mcVersion.equals("v1_12_R1") || plugin.settingsManager.mcVersion.startsWith("v1_13")) {
+            if (plugin.settingsManager.mcVersion.equals("v1_12_R1") || plugin.settingsManager.mcVersion.startsWith("v1_13") || plugin.settingsManager.mcVersion.startsWith("v1_14_")) {
                 new PreAction(player, message);
             } else if (!(plugin.settingsManager.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.settingsManager.mcVersion.contains("v1_7_")))) {
                 Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.settingsManager.mcVersion + ".entity.CraftPlayer");
