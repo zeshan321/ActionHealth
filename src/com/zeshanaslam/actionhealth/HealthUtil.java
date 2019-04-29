@@ -230,7 +230,6 @@ public class HealthUtil {
         RegionQuery regionQuery = regionContainer.createQuery();
         ApplicableRegionSet applicableRegions = regionQuery.getApplicableRegions(BukkitAdapter.adapt(location));
         for (ProtectedRegion region : applicableRegions) {
-            System.out.println(region.getId());
             if (plugin.settingsManager.regions.contains(region.getId())) {
                 return true;
             }
