@@ -1,5 +1,7 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.events;
 
+import com.zeshanaslam.actionhealth.Main;
+import com.zeshanaslam.actionhealth.utils.FileHandler;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -21,7 +23,7 @@ public class HealthListeners implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (plugin.settingsManager.checkPvP && event.isCancelled()) {
+        if (plugin.configStore.checkPvP && event.isCancelled()) {
             return;
         }
 
@@ -29,14 +31,20 @@ public class HealthListeners implements Listener {
             return;
         }
 
-        if (plugin.settingsManager.worlds.contains(event.getDamager().getWorld().getName())) {
+        if (plugin.configStore.worlds.contains(event.getDamager().getWorld().getName())) {
             return;
         }
 
-        if (plugin.settingsManager.usePerms && !event.getDamager().hasPermission("ActionHealth.Health")) {
+        if (plugin.configStore.usePerms && !event.getDamager().hasPermission("ActionHealth.Health")) {
             return;
         }
 
+        // Check if the setting 'Show Player' is enabled
+        if (event.getEntity() instanceof Player) {
+            if (!plugin.configStore.showPlayers) {
+                return;
+            }
+        }
 
         Entity damaged = event.getEntity();
         if (damaged.getType().name().equals("ARMOR_STAND")) return;
@@ -47,14 +55,7 @@ public class HealthListeners implements Listener {
             if (projectile.getShooter() instanceof Player) {
                 Player player = (Player) projectile.getShooter();
 
-                // Check if the setting 'Show Player' is enabled
-                if (event.getEntity() instanceof Player) {
-                    if (!plugin.settingsManager.showPlayers) {
-                        return;
-                    }
-                }
-
-                if (!plugin.settingsManager.showMobs) {
+                if (!plugin.configStore.showMobs) {
                     return;
                 }
 
@@ -63,9 +64,7 @@ public class HealthListeners implements Listener {
                 }
 
                 if (plugin.toggle.contains(player.getUniqueId())) {
-                    if (plugin.settingsManager.toggleMessage != null && !plugin.settingsManager.toggleMessage.equals("")) {
-                        plugin.healthUtil.sendActionBar(player, plugin.settingsManager.toggleMessage.replace("{name}", player.getName()));
-                    }
+                    sendMessage(player);
                     return;
                 }
 
@@ -86,7 +85,7 @@ public class HealthListeners implements Listener {
 
             // Check if the setting 'Show Player' is enabled
             if (event.getEntity() instanceof Player) {
-                if (!plugin.settingsManager.showPlayers) {
+                if (!plugin.configStore.showPlayers) {
                     return;
                 }
 
@@ -95,14 +94,12 @@ public class HealthListeners implements Listener {
                 }
             }
 
-            if (!plugin.settingsManager.showMobs) {
+            if (!plugin.configStore.showMobs) {
                 return;
             }
 
             if (plugin.toggle.contains(player.getUniqueId())) {
-                if (plugin.settingsManager.toggleMessage != null && !plugin.settingsManager.toggleMessage.equals("")) {
-                    plugin.healthUtil.sendActionBar(player, plugin.settingsManager.toggleMessage.replace("{name}", player.getName()));
-                }
+                sendMessage(player);
                 return;
             }
 
@@ -114,11 +111,17 @@ public class HealthListeners implements Listener {
         }
     }
 
+    private void sendMessage(Player player) {
+        if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
+            plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        if (plugin.settingsManager.rememberToggle) {
+        if (plugin.configStore.rememberToggle) {
             FileHandler fileHandler = new FileHandler("plugins/ActionHealth/players/" + player.getUniqueId() + ".yml");
 
             if (fileHandler.getBoolean("toggle")) {
@@ -131,8 +134,6 @@ public class HealthListeners implements Listener {
     public void onLeave(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 
-        if (plugin.toggle.contains(player.getUniqueId())) {
-            plugin.toggle.remove(player.getUniqueId());
-        }
+        plugin.toggle.remove(player.getUniqueId());
     }
 }

@@ -1,4 +1,4 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.utils;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.file.YamlConfigurationOptions;

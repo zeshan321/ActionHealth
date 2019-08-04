@@ -1,10 +1,7 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.utils;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.regions.RegionQuery;
+import com.zeshanaslam.actionhealth.Main;
+import com.zeshanaslam.actionhealth.support.PreAction;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
@@ -24,7 +21,7 @@ public class HealthUtil {
     }
 
     public void sendHealth(Player receiver, LivingEntity entity, double health) {
-        if (plugin.settingsManager.canSee) {
+        if (plugin.configStore.canSee) {
 
             if (entity instanceof Player) {
                 Player player = (Player) entity;
@@ -35,7 +32,7 @@ public class HealthUtil {
             }
         }
 
-        if (plugin.settingsManager.spectatorMode) {
+        if (plugin.configStore.spectatorMode) {
 
             if (entity instanceof Player) {
                 Player player = (Player) entity;
@@ -47,13 +44,13 @@ public class HealthUtil {
             }
         }
 
-        if (plugin.settingsManager.invisiblePotion) {
+        if (plugin.configStore.invisiblePotion) {
             if (entity.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
                 return;
             }
         }
 
-        if (plugin.settingsManager.delay) {
+        if (plugin.configStore.delay) {
 
             new BukkitRunnable() {
                 public void run() {
@@ -62,7 +59,7 @@ public class HealthUtil {
                     if (output != null)
                         sendActionBar(receiver, output);
                 }
-            }.runTaskLater(plugin, 1L);
+            }.runTaskLater(plugin, plugin.configStore.delayTick);
         } else {
             String output = getOutput(health, receiver, entity);
 
@@ -83,13 +80,13 @@ public class HealthUtil {
             name = entity.getCustomName();
         }
 
-        if (plugin.settingsManager.blacklist.contains(name)) return null;
+        if (plugin.configStore.blacklist.contains(name)) return null;
 
-        if (plugin.settingsManager.stripName) name = ChatColor.stripColor(name);
-        if (plugin.settingsManager.translate.containsKey(entity.getName()))
-            name = plugin.settingsManager.translate.get(entity.getName());
+        if (plugin.configStore.stripName) name = ChatColor.stripColor(name);
+        if (plugin.configStore.translate.containsKey(entity.getName()))
+            name = plugin.configStore.translate.get(entity.getName());
 
-        String output = plugin.settingsManager.healthMessage;
+        String output = plugin.configStore.healthMessage;
 
         if (entity instanceof Player) {
             String displayName;
@@ -104,17 +101,17 @@ public class HealthUtil {
             output = output.replace("{displayname}", displayName);
 
             // Placeholder apis
-            if (plugin.settingsManager.hasMVdWPlaceholderAPI) {
+            if (plugin.configStore.hasMVdWPlaceholderAPI) {
                 output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(player, output);
             }
 
-            if (plugin.settingsManager.hasPlaceholderAPI) {
+            if (plugin.configStore.hasPlaceholderAPI) {
                 output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
                 output = me.clip.placeholderapi.PlaceholderAPI.setRelationalPlaceholders(receiver, player, output);
             }
         } else {
-            if (!plugin.settingsManager.healthMessageOther.isEmpty()) {
-                output = plugin.settingsManager.healthMessageOther;
+            if (!plugin.configStore.healthMessageOther.isEmpty()) {
+                output = plugin.configStore.healthMessageOther;
             }
 
             output = output.replace("{displayname}", name);
@@ -126,17 +123,17 @@ public class HealthUtil {
 
         if (output.contains("{usestyle}")) {
             StringBuilder style = new StringBuilder();
-            int left = plugin.settingsManager.limitHealth;
-            double heart = maxHealth / plugin.settingsManager.limitHealth;
+            int left = plugin.configStore.limitHealth;
+            double heart = maxHealth / plugin.configStore.limitHealth;
             double halfHeart = heart / 2;
             double tempHealth = health;
 
             if (maxHealth != health && health >= 0 && !entity.isDead()) {
-                for (int i = 0; i < plugin.settingsManager.limitHealth; i++) {
+                for (int i = 0; i < plugin.configStore.limitHealth; i++) {
                     if (tempHealth - heart > 0) {
                         tempHealth = tempHealth - heart;
 
-                        style.append(plugin.settingsManager.filledHeartIcon);
+                        style.append(plugin.configStore.filledHeartIcon);
                         left--;
                     } else {
                         break;
@@ -144,21 +141,21 @@ public class HealthUtil {
                 }
 
                 if (tempHealth > halfHeart) {
-                    style.append(plugin.settingsManager.filledHeartIcon);
+                    style.append(plugin.configStore.filledHeartIcon);
                     left--;
                 } else if (tempHealth > 0 && tempHealth <= halfHeart) {
-                    style.append(plugin.settingsManager.halfHeartIcon);
+                    style.append(plugin.configStore.halfHeartIcon);
                     left--;
                 }
             }
 
             if (maxHealth != health) {
                 for (int i = 0; i < left; i++) {
-                    style.append(plugin.settingsManager.emptyHeartIcon);
+                    style.append(plugin.configStore.emptyHeartIcon);
                 }
             } else {
                 for (int i = 0; i < left; i++) {
-                    style.append(plugin.settingsManager.filledHeartIcon);
+                    style.append(plugin.configStore.filledHeartIcon);
                 }
             }
 
@@ -172,17 +169,17 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.settingsManager.mcVersion.equals("v1_12_R1") || plugin.settingsManager.mcVersion.startsWith("v1_13") || plugin.settingsManager.mcVersion.startsWith("v1_14_")) {
+            if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_")) {
                 new PreAction(player, message);
-            } else if (!(plugin.settingsManager.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.settingsManager.mcVersion.contains("v1_7_")))) {
-                Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.settingsManager.mcVersion + ".entity.CraftPlayer");
+            } else if (!(plugin.configStore.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.configStore.mcVersion.contains("v1_7_")))) {
+                Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.configStore.mcVersion + ".entity.CraftPlayer");
                 Object p = c1.cast(player);
                 Object ppoc;
-                Class<?> c4 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".PacketPlayOutChat");
-                Class<?> c5 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".Packet");
+                Class<?> c4 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".PacketPlayOutChat");
+                Class<?> c5 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".Packet");
 
-                Class<?> c2 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".ChatComponentText");
-                Class<?> c3 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".IChatBaseComponent");
+                Class<?> c2 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".ChatComponentText");
+                Class<?> c3 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".IChatBaseComponent");
                 Object o = c2.getConstructor(new Class<?>[]{String.class}).newInstance(message);
                 ppoc = c4.getConstructor(new Class<?>[]{c3, byte.class}).newInstance(o, (byte) 2);
 
@@ -195,14 +192,14 @@ public class HealthUtil {
                 Method sendPacket = playerConnection.getClass().getDeclaredMethod("sendPacket", c5);
                 sendPacket.invoke(playerConnection, ppoc);
             } else {
-                Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.settingsManager.mcVersion + ".entity.CraftPlayer");
+                Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.configStore.mcVersion + ".entity.CraftPlayer");
                 Object p = c1.cast(player);
                 Object ppoc;
-                Class<?> c4 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".PacketPlayOutChat");
-                Class<?> c5 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".Packet");
+                Class<?> c4 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".PacketPlayOutChat");
+                Class<?> c5 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".Packet");
 
-                Class<?> c2 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".ChatSerializer");
-                Class<?> c3 = Class.forName("net.minecraft.server." + plugin.settingsManager.mcVersion + ".IChatBaseComponent");
+                Class<?> c2 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".ChatSerializer");
+                Class<?> c3 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".IChatBaseComponent");
                 Method m3 = c2.getDeclaredMethod("a", String.class);
                 Object cbc = c3.cast(m3.invoke(c2, "{\"text\": \"" + message + "\"}"));
                 ppoc = c4.getConstructor(new Class<?>[]{c3, byte.class}).newInstance(cbc, (byte) 2);
@@ -226,11 +223,8 @@ public class HealthUtil {
             return false;
         }
 
-        RegionContainer regionContainer = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionQuery regionQuery = regionContainer.createQuery();
-        ApplicableRegionSet applicableRegions = regionQuery.getApplicableRegions(BukkitAdapter.adapt(location));
-        for (ProtectedRegion region : applicableRegions) {
-            if (plugin.settingsManager.regions.contains(region.getId())) {
+        for (String regionName : plugin.worldGuardAPI.getRegionNames(location)) {
+            if (plugin.configStore.regions.contains(regionName)) {
                 return true;
             }
         }

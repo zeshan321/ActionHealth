@@ -1,5 +1,6 @@
 package com.zeshanaslam.actionhealth;
 
+import com.zeshanaslam.actionhealth.utils.TargetHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -31,13 +32,13 @@ public class LookThread extends BukkitRunnable {
     public void run() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (plugin.toggle.contains(player.getUniqueId())) {
-                if (plugin.settingsManager.toggleMessage != null && !plugin.settingsManager.toggleMessage.equals("")) {
-                    plugin.healthUtil.sendActionBar(player, plugin.settingsManager.toggleMessage.replace("{name}", player.getName()));
+                if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
+                    plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
                 }
                 continue;
             }
 
-            List<LivingEntity> entities = TargetHelper.getLivingTargets(player, plugin.settingsManager.lookDistance);
+            List<LivingEntity> entities = TargetHelper.getLivingTargets(player, plugin.configStore.lookDistance);
             if (!entities.isEmpty()) {
                 for (LivingEntity livingEntity : entities) {
                     if (livingEntity.getType().name().equals("ARMOR_STAND")) continue;
@@ -50,7 +51,7 @@ public class LookThread extends BukkitRunnable {
                         name = livingEntity.getCustomName();
                     }
 
-                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.settingsManager.blacklist.contains(name) && !livingEntity.hasMetadata("NPC")) {
+                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.configStore.blacklist.contains(name) && !livingEntity.hasMetadata("NPC")) {
                         plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth());
                         break;
                     }

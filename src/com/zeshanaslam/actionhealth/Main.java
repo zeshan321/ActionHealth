@@ -1,6 +1,11 @@
 package com.zeshanaslam.actionhealth;
 
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.zeshanaslam.actionhealth.commands.HealthCommand;
+import com.zeshanaslam.actionhealth.config.ConfigStore;
+import com.zeshanaslam.actionhealth.events.HealthListeners;
+import com.zeshanaslam.actionhealth.support.WorldGuardAPI;
+import com.zeshanaslam.actionhealth.utils.HealthUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -11,8 +16,9 @@ import java.util.UUID;
 
 public class Main extends JavaPlugin {
 
-    public SettingsManager settingsManager;
+    public ConfigStore configStore;
     public WorldGuardPlugin worldGuardPlugin;
+    public WorldGuardAPI worldGuardAPI;
     public HealthUtil healthUtil;
     public int taskID = -1;
 
@@ -26,7 +32,7 @@ public class Main extends JavaPlugin {
         this.healthUtil = new HealthUtil(this);
 
         // Load config settings
-        settingsManager = new SettingsManager(this);
+        configStore = new ConfigStore(this);
 
         // Create player folder
         File file = new File("plugins/ActionHealth/players/");
@@ -35,11 +41,12 @@ public class Main extends JavaPlugin {
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
 
-        // Register command
+        // Register commands
         getCommand("Actionhealth").setExecutor(new HealthCommand(this));
 
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("WorldGuard")) {
             this.worldGuardPlugin = ((WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard"));
+            this.worldGuardAPI = new WorldGuardAPI(this);
         }
     }
 

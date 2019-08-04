@@ -1,7 +1,6 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.utils;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -47,6 +46,10 @@ public class TargetHelper {
      * @return all entities in the player's vision line
      */
     public static List<LivingEntity> getLivingTargets(LivingEntity source, double range, double tolerance) {
+        if (source == null) {
+            return new ArrayList<>();
+        }
+
         List<Entity> list = source.getNearbyEntities(range, range, range);
         List<LivingEntity> targets = new ArrayList<LivingEntity>();
 
@@ -157,6 +160,8 @@ public class TargetHelper {
      * @return true if the target is in front of the entity
      */
     public static boolean isInFront(Entity entity, Entity target) {
+        if (entity.getWorld() != target.getWorld())
+            return false;
 
         // Get the necessary vectors
         Vector facing = entity.getLocation().getDirection();

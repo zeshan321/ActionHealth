@@ -1,4 +1,4 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.support;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

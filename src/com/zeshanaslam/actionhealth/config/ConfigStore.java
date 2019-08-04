@@ -1,5 +1,7 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.config;
 
+import com.zeshanaslam.actionhealth.LookThread;
+import com.zeshanaslam.actionhealth.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitTask;
@@ -9,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SettingsManager {
+public class ConfigStore {
 
     public String healthMessage;
     public String healthMessageOther;
@@ -17,6 +19,7 @@ public class SettingsManager {
     public boolean showMobs;
     public boolean showPlayers;
     public boolean delay;
+    public long delayTick;
     public boolean checkPvP;
     public boolean stripName;
     public boolean rememberToggle;
@@ -41,7 +44,7 @@ public class SettingsManager {
     public boolean hasPlaceholderAPI;
     public int limitHealth;
 
-    public SettingsManager(Main plugin) {
+    public ConfigStore(Main plugin) {
         // Clear settings for reloads
         worlds.clear();
         regions.clear();
@@ -68,6 +71,12 @@ public class SettingsManager {
         showMobs = plugin.getConfig().getBoolean("Show Mob");
         showPlayers = plugin.getConfig().getBoolean("Show Player");
         delay = plugin.getConfig().getBoolean("Delay Message");
+        if (plugin.getConfig().contains("Delay Tick")) {
+            delayTick = plugin.getConfig().getLong("Delay Tick");
+        } else {
+            delayTick = 1L;
+        }
+
         checkPvP = plugin.getConfig().getBoolean("Region PvP");
         stripName = plugin.getConfig().getBoolean("Strip Name");
         filledHeartIcon = plugin.getConfig().getString("Full Health Icon");

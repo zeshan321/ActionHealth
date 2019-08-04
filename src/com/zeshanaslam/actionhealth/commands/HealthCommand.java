@@ -1,5 +1,8 @@
-package com.zeshanaslam.actionhealth;
+package com.zeshanaslam.actionhealth.commands;
 
+import com.zeshanaslam.actionhealth.Main;
+import com.zeshanaslam.actionhealth.config.ConfigStore;
+import com.zeshanaslam.actionhealth.utils.FileHandler;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,7 +30,7 @@ public class HealthCommand implements CommandExecutor {
                 }
 
                 plugin.reloadConfig();
-                plugin.settingsManager = new SettingsManager(plugin);
+                plugin.configStore = new ConfigStore(plugin);
                 sender.sendMessage(ChatColor.RED + "ActionHealth " + ChatColor.GRAY + "has been reloaded!");
                 return true;
             }
@@ -39,14 +42,14 @@ public class HealthCommand implements CommandExecutor {
                     if (plugin.toggle.contains(player.getUniqueId())) {
                         plugin.toggle.remove(player.getUniqueId());
 
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.settingsManager.enableMessage).replace("{name}", player.getName()));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.configStore.enableMessage).replace("{name}", player.getName()));
                     } else {
                         plugin.toggle.add(player.getUniqueId());
 
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.settingsManager.disableMessage).replace("{name}", player.getName()));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.configStore.disableMessage).replace("{name}", player.getName()));
                     }
 
-                    if (plugin.settingsManager.rememberToggle) {
+                    if (plugin.configStore.rememberToggle) {
                         FileHandler fileHandler = new FileHandler("plugins/ActionHealth/players/" + player.getUniqueId() + ".yml");
                         fileHandler.set("toggle", plugin.toggle.contains(player.getUniqueId()));
 
