@@ -21,6 +21,7 @@ public class Main extends JavaPlugin {
     public WorldGuardAPI worldGuardAPI;
     public HealthUtil healthUtil;
     public int taskID = -1;
+    public boolean mcMMOEnabled;
 
     public List<UUID> toggle = new ArrayList<>();
 
@@ -47,6 +48,10 @@ public class Main extends JavaPlugin {
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("WorldGuard")) {
             this.worldGuardPlugin = ((WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard"));
             this.worldGuardAPI = new WorldGuardAPI(this);
+        }
+
+        if (Bukkit.getServer().getPluginManager().isPluginEnabled("mcMMO")) {
+            mcMMOEnabled = true;
         }
     }
 

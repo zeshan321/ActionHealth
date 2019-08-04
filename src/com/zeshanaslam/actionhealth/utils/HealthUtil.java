@@ -1,16 +1,21 @@
 package com.zeshanaslam.actionhealth.utils;
 
 import com.zeshanaslam.actionhealth.Main;
+import com.zeshanaslam.actionhealth.support.McMMOSupport;
 import com.zeshanaslam.actionhealth.support.PreAction;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class HealthUtil {
 
@@ -69,22 +74,13 @@ public class HealthUtil {
     }
 
     private String getOutput(double health, Player receiver, LivingEntity entity) {
-        String name;
         double maxHealth = entity.getMaxHealth();
 
         if (health < 0.0 || entity.isDead()) health = 0.0;
 
-        if (entity.getCustomName() == null) {
-            name = entity.getName();
-        } else {
-            name = entity.getCustomName();
-        }
-
+        String name = getName(entity);
         if (plugin.configStore.blacklist.contains(name)) return null;
-
         if (plugin.configStore.stripName) name = ChatColor.stripColor(name);
-        if (plugin.configStore.translate.containsKey(entity.getName()))
-            name = plugin.configStore.translate.get(entity.getName());
 
         String output = plugin.configStore.healthMessage;
 
@@ -163,6 +159,63 @@ public class HealthUtil {
         }
 
         return output;
+    }
+
+    public String getName(LivingEntity entity) {
+        String name;
+
+        // Supporting mcmmo health bar to get to display correct name.
+        List<MetadataValue> metadataValues = entity.getMetadata("mcMMO_oldName");
+        List<MetadataValue> metadataValuesOld = entity.getMetadata("mcMMO: Custom Name");
+
+        String mcMMOName = null;
+        if (plugin.mcMMOEnabled && entity.getCustomName() != null && (!metadataValues.isEmpty() || !metadataValuesOld.isEmpty())) {
+            mcMMOName = new McMMOSupport().getName(metadataValues.isEmpty() ? metadataValuesOld.get(0) : metadataValues.get(0));
+        }
+
+        if (mcMMOName == null) {
+            if (entity.getCustomName() == null) {
+                name = getNameReflection(entity);
+            } else {
+                name = entity.getCustomName();
+            }
+        } else if (mcMMOName.equals("")) {
+            name = getNameReflection(entity);
+        } else {
+            name = mcMMOName;
+        }
+
+        if (plugin.configStore.translate.containsKey(name))
+            name = plugin.configStore.translate.get(name);
+
+        return name;
+    }
+
+    private String getNameReflection(LivingEntity entity) {
+        String name;
+        Method getName = null;
+        try {
+            if (entity.getCustomName() == null)
+                getName = entity.getClass().getMethod("getName", (Class<?>[]) null);
+        } catch (NoSuchMethodException | SecurityException ignored) {
+        }
+
+        if (getName != null) {
+            try {
+                name = (String) getName.invoke(entity, (Object[]) null);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                name = capitalizeFully(entity.getType().name().replace("_", ""));
+            }
+        } else {
+            name = capitalizeFully(entity.getType().name().replace("_", ""));
+        }
+
+        return name;
+    }
+
+    private String capitalizeFully(String words) {
+        words = words.toLowerCase();
+        return WordUtils.capitalizeFully(words);
     }
 
     public void sendActionBar(Player player, String message) {

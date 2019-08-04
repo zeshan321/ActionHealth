@@ -49,14 +49,14 @@ Empty Health Icon: "&7\u2764"
 # Translate names. Case sensitive!
 Name Change: false
 Name:
-- Snow Golem = New name
+  - Snow Golem = New name
 
 # ActionHealth will be disabled for any world names added below. Case sensitive!
 Disabled worlds:
-- randomworld
+  - randomworld
 
 Disabled regions:
-- testing_region
+  - testing_region
 
 # Disable ActionHealth in regions where PvP is denied.
 Region PvP: true
@@ -70,7 +70,7 @@ Remember Toggle: false
 
 # Blacklist by entity name or entity display name.
 Blacklist:
-- 'CCPD Officer'
+  - 'CCPD Officer'
 
 # Show the health of the entity that the player is looking at.
 Show On Look: true
