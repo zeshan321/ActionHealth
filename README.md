@@ -26,7 +26,9 @@ Within ActionHealth you can translate mob names by using the "Name Change" optio
 
 - Russian by @Blacker (Spigot)
   - [Link to translation](https://github.com/zeshan321/ActionHealth/blob/master/translations/Russian1-12-2.yml)
-    - Server version: 1.12.2
+    - Server IP: unconfirmed
+- Spanish by [@ModoSN](https://github.com/ModoSN) (GitHub)
+  - [Link to translation](https://github.com/zeshan321/ActionHealth/blob/master/translations/Spanish.yml)
     - Server IP: unconfirmed
 
 # More info
