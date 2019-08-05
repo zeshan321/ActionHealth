@@ -85,6 +85,8 @@ Invisible Potion: true
 Spectator Mode: true
 
 # Translate names. Case sensitive!
+# Check ActionHealth page if translations already exist for the language you plan on using.
+#
 # I'd appreciate if servers that use custom translations share them with me, so I can share them with others!
 # For users that do, I will tag them on Spigot and display their server IP.
 Name Change: false
