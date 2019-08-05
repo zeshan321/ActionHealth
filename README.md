@@ -15,6 +15,7 @@ Spigot page: [Click Here](https://www.spigotmc.org/resources/action-bar-health.2
 - Placeholders support:
   - PlaceholderAPI
   - MVdWPlaceholderAPI
+- Supports MythicMobs (using internal name) for blacklisting
 
 # Config
 ActionHealth is a very configurable plugin. You can almost change every aspect in the config, including style.
