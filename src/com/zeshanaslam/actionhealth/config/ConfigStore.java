@@ -43,6 +43,7 @@ public class ConfigStore {
     public boolean hasMVdWPlaceholderAPI;
     public boolean hasPlaceholderAPI;
     public int limitHealth;
+    public boolean showNPC;
 
     public ConfigStore(Main plugin) {
         // Clear settings for reloads
@@ -70,6 +71,7 @@ public class ConfigStore {
         usePerms = plugin.getConfig().getBoolean("Use Permissions");
         showMobs = plugin.getConfig().getBoolean("Show Mob");
         showPlayers = plugin.getConfig().getBoolean("Show Player");
+        showNPC = plugin.getConfig().getBoolean("Show NPC");
         delay = plugin.getConfig().getBoolean("Delay Message");
         if (plugin.getConfig().contains("Delay Tick")) {
             delayTick = plugin.getConfig().getLong("Delay Tick");

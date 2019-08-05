@@ -41,12 +41,11 @@ public class LookThread extends BukkitRunnable {
             List<LivingEntity> entities = TargetHelper.getLivingTargets(player, plugin.configStore.lookDistance);
             if (!entities.isEmpty()) {
                 for (LivingEntity livingEntity : entities) {
-                    if (livingEntity.getType().name().equals("ARMOR_STAND")) continue;
-                    if (player.getWorld() != livingEntity.getWorld()) continue;
+                    if (!plugin.healthUtil.matchesRequirements(player, livingEntity)) continue;
 
                     String name = plugin.healthUtil.getName(livingEntity);
 
-                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.configStore.blacklist.contains(name) && !livingEntity.hasMetadata("NPC")) {
+                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.configStore.blacklist.contains(name)) {
                         plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth());
                         break;
                     }

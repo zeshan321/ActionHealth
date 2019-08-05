@@ -6,6 +6,7 @@ import com.zeshanaslam.actionhealth.support.PreAction;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
@@ -283,5 +284,49 @@ public class HealthUtil {
         }
 
         return false;
+    }
+
+    public boolean matchesRequirements(Player player, Entity damaged) {
+        if (damaged.getType().name().equals("ARMOR_STAND"))
+            return false;
+
+        if (player.getWorld() != damaged.getWorld())
+            return false;
+
+        if (damaged instanceof Player) {
+            if (!plugin.configStore.showPlayers)
+                return false;
+
+            if (!plugin.configStore.showNPC && damaged.hasMetadata("NPC"))
+                return false;
+        } else {
+            if (!plugin.configStore.showMobs)
+                return false;
+        }
+
+        if (plugin.healthUtil.isDisabled(player.getLocation()))
+            return false;
+
+        if (plugin.configStore.worlds.contains(player.getWorld().getName()))
+            return false;
+
+        if (plugin.configStore.usePerms && !player.hasPermission("ActionHealth.Health"))
+            return false;
+
+        if (player.getUniqueId() == damaged.getUniqueId())
+            return false;
+
+        if (plugin.toggle.contains(player.getUniqueId())) {
+            sendMessage(player);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void sendMessage(Player player) {
+        if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
+            plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
+        }
     }
 }

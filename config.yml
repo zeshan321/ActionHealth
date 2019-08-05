@@ -36,6 +36,9 @@ Show Mob: true
 # If set to false player will not see health messages from other players.
 Show Player: true
 
+# If set to false player will not see health messages from npcs.
+Show NPC: true
+
 # If set to true player will get the message in a delay to get 100% accurate health. Useful for plugins that add damage by reading item lore.
 Delay Message: false
 # Amount delayed by

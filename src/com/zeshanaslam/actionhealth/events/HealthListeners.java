@@ -27,44 +27,13 @@ public class HealthListeners implements Listener {
             return;
         }
 
-        if (plugin.healthUtil.isDisabled(event.getDamager().getLocation())) {
-            return;
-        }
-
-        if (plugin.configStore.worlds.contains(event.getDamager().getWorld().getName())) {
-            return;
-        }
-
-        if (plugin.configStore.usePerms && !event.getDamager().hasPermission("ActionHealth.Health")) {
-            return;
-        }
-
-        // Check if the setting 'Show Player' is enabled
-        if (event.getEntity() instanceof Player) {
-            if (!plugin.configStore.showPlayers) {
-                return;
-            }
-        }
-
         Entity damaged = event.getEntity();
-        if (damaged.getType().name().equals("ARMOR_STAND")) return;
-
         if (event.getDamager() instanceof Projectile) {
             Projectile projectile = (Projectile) event.getDamager();
 
             if (projectile.getShooter() instanceof Player) {
                 Player player = (Player) projectile.getShooter();
-
-                if (!plugin.configStore.showMobs) {
-                    return;
-                }
-
-                if (player.getUniqueId() == damaged.getUniqueId()) {
-                    return;
-                }
-
-                if (plugin.toggle.contains(player.getUniqueId())) {
-                    sendMessage(player);
+                if (!plugin.healthUtil.matchesRequirements(player, damaged)) {
                     return;
                 }
 
@@ -79,27 +48,7 @@ public class HealthListeners implements Listener {
         if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
 
-            if (player.getUniqueId() == damaged.getUniqueId()) {
-                return;
-            }
-
-            // Check if the setting 'Show Player' is enabled
-            if (event.getEntity() instanceof Player) {
-                if (!plugin.configStore.showPlayers) {
-                    return;
-                }
-
-                if (player.hasMetadata("NPC")) {
-                    return;
-                }
-            }
-
-            if (!plugin.configStore.showMobs) {
-                return;
-            }
-
-            if (plugin.toggle.contains(player.getUniqueId())) {
-                sendMessage(player);
+            if (!plugin.healthUtil.matchesRequirements(player, damaged)) {
                 return;
             }
 
@@ -108,12 +57,6 @@ public class HealthListeners implements Listener {
                 LivingEntity livingEntity = (LivingEntity) damaged;
                 plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
             }
-        }
-    }
-
-    private void sendMessage(Player player) {
-        if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
-            plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
         }
     }
 
