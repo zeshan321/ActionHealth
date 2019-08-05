@@ -49,11 +49,6 @@ Full Health Icon: "&4\u2764"
 Half Health Icon: "&c\u2764"
 Empty Health Icon: "&7\u2764"
 
-# Translate names. Case sensitive!
-Name Change: false
-Name:
-  - Snow Golem = New name
-
 # ActionHealth will be disabled for any world names added below. Case sensitive!
 Disabled worlds:
   - randomworld
@@ -72,6 +67,7 @@ Limit Health: 10
 Remember Toggle: false
 
 # Blacklist by entity name or entity display name.
+# Also supports MythicMobs using the internal name.
 Blacklist:
   - 'CCPD Officer'
 
@@ -87,3 +83,10 @@ Invisible Potion: true
 
 # Hide if entity is in spectator mode.
 Spectator Mode: true
+
+# Translate names. Case sensitive!
+# I'd appreciate if servers that use custom translations share them with me, so I can share them with others!
+# For users that do, I will tag them on Spigot and display their server IP.
+Name Change: false
+Name:
+  - Snow Golem = New name

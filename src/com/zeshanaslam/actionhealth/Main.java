@@ -22,6 +22,7 @@ public class Main extends JavaPlugin {
     public HealthUtil healthUtil;
     public int taskID = -1;
     public boolean mcMMOEnabled;
+    public boolean mythicMobsEnabled;
 
     public List<UUID> toggle = new ArrayList<>();
 
@@ -52,6 +53,10 @@ public class Main extends JavaPlugin {
 
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("mcMMO")) {
             mcMMOEnabled = true;
+        }
+
+        if (Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+            mythicMobsEnabled = true;
         }
     }
 

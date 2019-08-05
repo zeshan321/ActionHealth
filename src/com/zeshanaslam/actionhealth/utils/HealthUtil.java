@@ -2,6 +2,7 @@ package com.zeshanaslam.actionhealth.utils;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.support.McMMOSupport;
+import com.zeshanaslam.actionhealth.support.MythicMobsSupport;
 import com.zeshanaslam.actionhealth.support.PreAction;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
@@ -80,7 +81,7 @@ public class HealthUtil {
         if (health < 0.0 || entity.isDead()) health = 0.0;
 
         String name = getName(entity);
-        if (plugin.configStore.blacklist.contains(name)) return null;
+        if (plugin.healthUtil.isBlacklisted(entity, name)) return null;
         if (plugin.configStore.stripName) name = ChatColor.stripColor(name);
 
         String output = plugin.configStore.healthMessage;
@@ -328,5 +329,16 @@ public class HealthUtil {
         if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
             plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
         }
+    }
+
+    public boolean isBlacklisted(Entity entity, String name) {
+        if (plugin.mythicMobsEnabled) {
+            String mythicName = new MythicMobsSupport().getMythicName(entity);
+            if (mythicName != null && plugin.configStore.blacklist.contains(mythicName)) {
+                return true;
+            }
+        }
+
+        return plugin.configStore.blacklist.contains(name);
     }
 }

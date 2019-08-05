@@ -28,26 +28,19 @@ public class HealthListeners implements Listener {
         }
 
         Entity damaged = event.getEntity();
+        Player player = null;
         if (event.getDamager() instanceof Projectile) {
             Projectile projectile = (Projectile) event.getDamager();
 
             if (projectile.getShooter() instanceof Player) {
-                Player player = (Player) projectile.getShooter();
-                if (!plugin.healthUtil.matchesRequirements(player, damaged)) {
-                    return;
-                }
-
-                // Send health
-                if (damaged instanceof LivingEntity) {
-                    LivingEntity livingEntity = (LivingEntity) damaged;
-                    plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
-                }
+                player = (Player) projectile.getShooter();
             }
         }
 
-        if (event.getDamager() instanceof Player) {
-            Player player = (Player) event.getDamager();
+        if (event.getDamager() instanceof Player)
+            player = (Player) event.getDamager();
 
+        if (player != null) {
             if (!plugin.healthUtil.matchesRequirements(player, damaged)) {
                 return;
             }

@@ -19,7 +19,7 @@ public class ConfigStore {
     public boolean showMobs;
     public boolean showPlayers;
     public boolean delay;
-    public long delayTick;
+    public int delayTick;
     public boolean checkPvP;
     public boolean stripName;
     public boolean rememberToggle;
@@ -74,9 +74,9 @@ public class ConfigStore {
         showNPC = plugin.getConfig().getBoolean("Show NPC");
         delay = plugin.getConfig().getBoolean("Delay Message");
         if (plugin.getConfig().contains("Delay Tick")) {
-            delayTick = plugin.getConfig().getLong("Delay Tick");
+            delayTick = plugin.getConfig().getInt("Delay Tick");
         } else {
-            delayTick = 1L;
+            delayTick = 1;
         }
 
         checkPvP = plugin.getConfig().getBoolean("Region PvP");

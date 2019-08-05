@@ -45,7 +45,7 @@ public class LookThread extends BukkitRunnable {
 
                     String name = plugin.healthUtil.getName(livingEntity);
 
-                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.configStore.blacklist.contains(name)) {
+                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.healthUtil.isBlacklisted(livingEntity, name)) {
                         plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth());
                         break;
                     }
