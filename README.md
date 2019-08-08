@@ -16,6 +16,7 @@ Spigot page: [Click Here](https://www.spigotmc.org/resources/action-bar-health.2
   - PlaceholderAPI
   - MVdWPlaceholderAPI
 - Supports MythicMobs (using internal name) for blacklisting
+- [LanguageUtils](https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/) for client translations
 
 # Config
 ActionHealth is a very configurable plugin. You can almost change every aspect in the config, including style.
