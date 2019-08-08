@@ -92,3 +92,6 @@ Spectator Mode: true
 Name Change: false
 Name:
   - Snow Golem = New name
+
+# Translate names using Client Language. Need to install LanguageUtils
+Use Client Language: false
