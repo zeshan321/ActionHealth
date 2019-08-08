@@ -45,6 +45,7 @@ public class ConfigStore {
     public boolean hasPlaceholderAPI;
     public int limitHealth;
     public boolean showNPC;
+    public boolean showMiniaturePets;
 
     public ConfigStore(Main plugin) {
         // Clear settings for reloads
@@ -169,5 +170,6 @@ public class ConfigStore {
                 limitHealth = plugin.getConfig().getInt("Limit Health");
             }
         }
+        showMiniaturePets = plugin.getConfig().getBoolean("ShowMiniaturePets");
     }
 }
