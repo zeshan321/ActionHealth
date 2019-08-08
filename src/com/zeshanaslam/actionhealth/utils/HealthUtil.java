@@ -187,11 +187,11 @@ public class HealthUtil {
 
         if (mcMMOName == null) {
             if (entity.getCustomName() != null) {
-            	name = entity.getCustomName();
-            } else if(plugin.langUtilsEnabled && plugin.configStore.useClientLanguage && receiver != null) {
-            	name = new LangUtilsSupport().getName(entity, receiver);
+                name = entity.getCustomName();
+            } else if (plugin.langUtilsEnabled && plugin.configStore.useClientLanguage && receiver != null) {
+                name = new LangUtilsSupport().getName(entity, receiver);
             } else {
-            	name = getNameReflection(entity);
+                name = getNameReflection(entity);
             }
         } else if (mcMMOName.equals("")) {
             name = getNameReflection(entity);

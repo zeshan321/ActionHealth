@@ -21,6 +21,10 @@ public class HealthSendEvent extends Event implements Cancellable {
         this.isCancelled = false;
     }
 
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
+
     public Player getPlayer() {
         return player;
     }
@@ -35,10 +39,6 @@ public class HealthSendEvent extends Event implements Cancellable {
 
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 
     @Override

@@ -59,9 +59,9 @@ public class Main extends JavaPlugin {
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
             mythicMobsEnabled = true;
         }
-        
+
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("LangUtils")) {
-        	langUtilsEnabled = true;
+            langUtilsEnabled = true;
         }
     }
 
