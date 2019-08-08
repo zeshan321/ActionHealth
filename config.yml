@@ -95,3 +95,7 @@ ShowMiniaturePets: true
 Name Change: false
 Name:
   - Snow Golem = New name
+
+# Translate names using Client Language. Need to install LanguageUtils
+# https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/
+Use Client Language: false

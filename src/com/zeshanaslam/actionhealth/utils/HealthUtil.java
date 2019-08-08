@@ -2,6 +2,7 @@ package com.zeshanaslam.actionhealth.utils;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.api.HealthSendEvent;
+import com.zeshanaslam.actionhealth.support.LangUtilsSupport;
 import com.zeshanaslam.actionhealth.support.McMMOSupport;
 import com.zeshanaslam.actionhealth.support.MythicMobsSupport;
 import com.zeshanaslam.actionhealth.support.PreAction;
@@ -82,7 +83,7 @@ public class HealthUtil {
 
         if (health < 0.0 || entity.isDead()) health = 0.0;
 
-        String name = getName(entity);
+        String name = getName(entity, receiver);
         if (plugin.healthUtil.isBlacklisted(entity, name)) return null;
         if (plugin.configStore.stripName) name = ChatColor.stripColor(name);
 
@@ -172,7 +173,7 @@ public class HealthUtil {
         return output;
     }
 
-    public String getName(LivingEntity entity) {
+    public String getName(LivingEntity entity, Player receiver) {
         String name;
 
         // Supporting mcmmo health bar to get to display correct name.
@@ -185,10 +186,12 @@ public class HealthUtil {
         }
 
         if (mcMMOName == null) {
-            if (entity.getCustomName() == null) {
-                name = getNameReflection(entity);
+            if (entity.getCustomName() != null) {
+            	name = entity.getCustomName();
+            } else if(plugin.langUtilsEnabled && plugin.configStore.useClientLanguage && receiver != null) {
+            	name = new LangUtilsSupport().getName(entity, receiver);
             } else {
-                name = entity.getCustomName();
+            	name = getNameReflection(entity);
             }
         } else if (mcMMOName.equals("")) {
             name = getNameReflection(entity);

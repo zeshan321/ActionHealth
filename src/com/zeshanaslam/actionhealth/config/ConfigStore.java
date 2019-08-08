@@ -26,6 +26,7 @@ public class ConfigStore {
     public boolean canSee;
     public boolean invisiblePotion;
     public boolean spectatorMode;
+    public boolean useClientLanguage;
     public String filledHeartIcon;
     public String halfHeartIcon;
     public String emptyHeartIcon;
@@ -91,6 +92,7 @@ public class ConfigStore {
                 translate.put(split[0], split[1]);
             }
         }
+        useClientLanguage = plugin.getConfig().getBoolean("Use Client Language");
 
         // Load disabled regions
         regions = plugin.getConfig().getStringList("Disabled regions");
