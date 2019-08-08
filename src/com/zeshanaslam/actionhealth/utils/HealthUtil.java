@@ -307,7 +307,7 @@ public class HealthUtil {
             return false;
 
         if (damaged instanceof Player) {
-            if (!plugin.configStore.showPlayers)
+            if (!plugin.configStore.showPlayers && !damaged.hasMetadata("NPC"))
                 return false;
         } else {
             if (!plugin.configStore.showMobs)
