@@ -23,6 +23,7 @@ public class Main extends JavaPlugin {
     public int taskID = -1;
     public boolean mcMMOEnabled;
     public boolean mythicMobsEnabled;
+    public boolean langUtilsEnabled;
 
     public List<UUID> toggle = new ArrayList<>();
 
@@ -57,6 +58,10 @@ public class Main extends JavaPlugin {
 
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
             mythicMobsEnabled = true;
+        }
+        
+        if (Bukkit.getServer().getPluginManager().isPluginEnabled("LangUtils")) {
+        	langUtilsEnabled = true;
         }
     }
 
