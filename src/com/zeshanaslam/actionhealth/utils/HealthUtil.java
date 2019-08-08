@@ -1,10 +1,12 @@
 package com.zeshanaslam.actionhealth.utils;
 
 import com.zeshanaslam.actionhealth.Main;
+import com.zeshanaslam.actionhealth.api.HealthSendEvent;
 import com.zeshanaslam.actionhealth.support.McMMOSupport;
 import com.zeshanaslam.actionhealth.support.MythicMobsSupport;
 import com.zeshanaslam.actionhealth.support.PreAction;
 import org.apache.commons.lang.WordUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -160,6 +162,13 @@ public class HealthUtil {
             output = output.replace("{usestyle}", style.toString());
         }
 
+        HealthSendEvent healthSendEvent = new HealthSendEvent(receiver, entity, output);
+        Bukkit.getPluginManager().callEvent(healthSendEvent);
+        if (healthSendEvent.isCancelled())
+            output = null;
+        else
+            output = healthSendEvent.getMessage();
+
         return output;
     }
 
@@ -297,13 +306,16 @@ public class HealthUtil {
         if (damaged instanceof Player) {
             if (!plugin.configStore.showPlayers)
                 return false;
-
-            if (!plugin.configStore.showNPC && damaged.hasMetadata("NPC"))
-                return false;
         } else {
             if (!plugin.configStore.showMobs)
                 return false;
         }
+
+        if (!plugin.configStore.showNPC && damaged.hasMetadata("NPC"))
+            return false;
+
+        if (!plugin.configStore.showMiniaturePets && damaged.hasMetadata("MiniaturePet"))
+            return false;
 
         if (plugin.healthUtil.isDisabled(player.getLocation()))
             return false;
