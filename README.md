@@ -31,6 +31,9 @@ Within ActionHealth you can translate mob names by using the "Name Change" optio
 - Spanish by [@ModoSN](https://github.com/ModoSN) (GitHub)
   - [Link to translation](https://github.com/zeshan321/ActionHealth/blob/master/translations/Spanish.yml)
     - Server IP: unconfirmed
+- Polish by @Nikox3003 (Spigot)
+  - [Link to translation](https://github.com/zeshan321/ActionHealth/blob/master/translations/Polish.yml)
+    - Server IP: LetCraft.pl
 
 # More info
 Custom styles, screenshots, command information and more can be found on the spigot page.
