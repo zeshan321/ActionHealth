@@ -1,6 +1,8 @@
 package com.zeshanaslam.actionhealth;
 
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.zeshanaslam.actionhealth.action.ActionListener;
+import com.zeshanaslam.actionhealth.action.ActionTask;
 import com.zeshanaslam.actionhealth.commands.HealthCommand;
 import com.zeshanaslam.actionhealth.config.ConfigStore;
 import com.zeshanaslam.actionhealth.events.HealthListeners;
@@ -8,6 +10,7 @@ import com.zeshanaslam.actionhealth.support.WorldGuardAPI;
 import com.zeshanaslam.actionhealth.utils.HealthUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ public class Main extends JavaPlugin {
     public boolean mcMMOEnabled;
     public boolean mythicMobsEnabled;
     public boolean langUtilsEnabled;
+    public BukkitTask actionTask;
 
     public List<UUID> toggle = new ArrayList<>();
 
@@ -43,6 +47,7 @@ public class Main extends JavaPlugin {
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
+        getServer().getPluginManager().registerEvents(new ActionListener(this), this);
 
         // Register commands
         getCommand("Actionhealth").setExecutor(new HealthCommand(this));
@@ -63,6 +68,8 @@ public class Main extends JavaPlugin {
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("LangUtils")) {
             langUtilsEnabled = true;
         }
+
+        actionTask = new ActionTask(this).runTaskTimer(this, 0, 20);
     }
 
     @Override

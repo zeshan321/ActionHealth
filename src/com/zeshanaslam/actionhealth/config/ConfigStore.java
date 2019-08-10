@@ -2,6 +2,7 @@ package com.zeshanaslam.actionhealth.config;
 
 import com.zeshanaslam.actionhealth.LookThread;
 import com.zeshanaslam.actionhealth.Main;
+import com.zeshanaslam.actionhealth.action.ActionStore;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitTask;
@@ -46,6 +47,7 @@ public class ConfigStore {
     public int limitHealth;
     public boolean showNPC;
     public boolean showMiniaturePets;
+    public ActionStore actionStore;
 
     public ConfigStore(Main plugin) {
         // Clear settings for reloads
@@ -171,5 +173,6 @@ public class ConfigStore {
             }
         }
         showMiniaturePets = plugin.getConfig().getBoolean("ShowMiniaturePets");
+        actionStore = new ActionStore(plugin);
     }
 }

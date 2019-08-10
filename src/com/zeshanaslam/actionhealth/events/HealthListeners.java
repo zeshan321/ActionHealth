@@ -2,6 +2,7 @@ package com.zeshanaslam.actionhealth.events;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.utils.FileHandler;
+import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -10,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -48,6 +50,8 @@ public class HealthListeners implements Listener {
             // Send health
             if (damaged instanceof LivingEntity) {
                 LivingEntity livingEntity = (LivingEntity) damaged;
+
+                livingEntity.setLastDamage(event.getFinalDamage());
                 plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
             }
         }

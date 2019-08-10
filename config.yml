@@ -4,6 +4,7 @@
 # {maxhealth} shows the max health of the mob or player.
 # {usestyle} will use the defined chars.
 # {displayname} will use player/mob custom name.
+# {opponentlastdamage} the amount of damage the enemy last received.
 # Has support for PlaceholderAPI and MVdWPlaceholderAPI.
 Health Message: '&7&l{name}: {usestyle}'
 
@@ -99,3 +100,23 @@ Name:
 # Translate names using Client Language. Need to install LanguageUtils
 # https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/
 Use Client Language: false
+
+# If enabled, when a player gets into combat they will be tagged for the configurable amount of time.
+# When the enemy triggers an action the provided message will be sent.
+# Supports all placeholders from above.
+# Supported events: CONSUME, RIGHTCLICK, LEFTCLICK, SWAP
+Action:
+  Enabled: false
+  # In seconds
+  TagLength: 20
+  # Amount of players a player can tag during combat. -1 for unlimited
+  TagAmount: 2
+  Events:
+    CONSUME:
+      GOLDEN_APPLE: '&7&l{name} consumed &cgolden apple&7&l!'
+      REGENERATION_POTION: '&7&l{name} consumed &cregen potion&7&l!'
+    RIGHTCLICK:
+      ENDER_PEARL: '&7&l{name} used &cender pearl&7&l!'
+    SWAP:
+      ENDER_PEARL: '&7&l{name} swapped to &cender pearls&7&l. {usestyle}&7&l'
+      POTION: '&7&l{name} swapped to &cpotion&7&l. {usestyle}&7&l'

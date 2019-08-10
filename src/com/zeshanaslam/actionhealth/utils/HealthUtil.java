@@ -64,21 +64,21 @@ public class HealthUtil {
 
             new BukkitRunnable() {
                 public void run() {
-                    String output = getOutput(entity.getHealth(), receiver, entity);
+                    String output = getOutput(entity.getHealth(), plugin.configStore.healthMessage, receiver, entity);
 
                     if (output != null)
                         sendActionBar(receiver, output);
                 }
             }.runTaskLater(plugin, plugin.configStore.delayTick);
         } else {
-            String output = getOutput(health, receiver, entity);
+            String output = getOutput(health, plugin.configStore.healthMessage, receiver, entity);
 
             if (output != null)
                 sendActionBar(receiver, output);
         }
     }
 
-    private String getOutput(double health, Player receiver, LivingEntity entity) {
+    public String getOutput(double health, String output, Player receiver, LivingEntity entity) {
         double maxHealth = entity.getMaxHealth();
 
         if (health < 0.0 || entity.isDead()) health = 0.0;
@@ -86,8 +86,6 @@ public class HealthUtil {
         String name = getName(entity, receiver);
         if (plugin.healthUtil.isBlacklisted(entity, name)) return null;
         if (plugin.configStore.stripName) name = ChatColor.stripColor(name);
-
-        String output = plugin.configStore.healthMessage;
 
         if (entity instanceof Player) {
             String displayName;
@@ -121,6 +119,7 @@ public class HealthUtil {
         output = output.replace("{name}", name);
         output = output.replace("{health}", String.valueOf((int) health));
         output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
+        output = output.replace("{opponentlastdamage}", String.valueOf((int) entity.getLastDamage()));
 
         if (output.contains("{usestyle}")) {
             StringBuilder style = new StringBuilder();
