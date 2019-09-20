@@ -10,7 +10,11 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,8 +95,20 @@ public class ActionListener implements Listener {
         String name = itemStack.getType().name();
         possibleMaterials.add(name);
 
-        if (name.contains("POTION")) {
-            possibleMaterials.add(Potion.fromItemStack(itemStack).getType().getEffectType().getName() + "_" + name);
+        if (itemStack.hasItemMeta()) {
+            ItemMeta itemMeta = itemStack.getItemMeta();
+            if (itemMeta instanceof PotionMeta) {
+                PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
+
+                PotionData potionData = potionMeta.getBasePotionData();
+                possibleMaterials.add(potionData.getType().getEffectType().getName() + "_" + name);
+
+                if (potionMeta.hasCustomEffects()) {
+                    for (PotionEffect potionEffect : potionMeta.getCustomEffects()) {
+                        possibleMaterials.add(potionEffect.getType().getName() + "_" + name);
+                    }
+                }
+            }
         }
 
         return possibleMaterials;

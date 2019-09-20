@@ -123,7 +123,7 @@ public class ConfigStore {
             lookDistance = plugin.getConfig().getDouble("Look Distance");
 
             if (showOnLook) {
-                BukkitTask bukkitTask = new LookThread(plugin).runTaskTimerAsynchronously(plugin, 0, 20);
+                BukkitTask bukkitTask = new LookThread(plugin).runTaskTimer(plugin, 0, 20);
                 plugin.taskID = bukkitTask.getTaskId();
             }
         } else {
