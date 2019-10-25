@@ -8,7 +8,7 @@ Name:
   - Creeper = Creeper
   - Donkey = Burro
   - Elder Guardian = Guardián Anciano
-  - Ender Dragon = Ender Continuar
+  - Ender Dragon = Dragón del Fin
   - Enderman = Enderman
   - Endermite = Endermite
   - Evoker = Evoker
@@ -17,7 +17,7 @@ Name:
   - Guardian = Guardián
   - Horse = Caballo
   - Husk = Cáscara
-  - Iron Golem = Golem de hierro
+  - Iron Golem = Golem de Hierro
   - Llama = Llama
   - Magma Cube = Cubo de Magma
   - Mooshroom = Champiñaca
@@ -25,15 +25,15 @@ Name:
   - Mule = Mula
   - Parrot = Loro
   - Pig = Cerdo
-  - Zombie Pigman = Zombi Porquero
+  - Zombie Pigman = Puerco Zombi
   - Polar Bear = Oso Polar
   - Rabbit = Conejo
   - Sheep = Oveja
   - Shulker = Shulker
   - Silverfish = Lepisma
-  - Skeleton = Caballo
+  - Skeleton = Esqueleto
   - Skeleton Horse = Caballo Esqueleto
-  - Slime = Limo
+  - Slime = Slime
   - Spider = Araña
   - Squid = Calamar
   - Stray = Stray
@@ -45,5 +45,5 @@ Name:
   - Wither Skeleton = Wither Esqueleto
   - Wolf = Lobo
   - Zombie = Zombi
-  - Zombie Horse = Zombi Caballo
-  - Zombie Villager = Zombi Aldeano
+  - Zombie Horse = Caballo Zombi
+  - Zombie Villager = Aldeano Zombi
