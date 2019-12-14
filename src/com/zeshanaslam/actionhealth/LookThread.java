@@ -14,9 +14,11 @@ public class LookThread extends BukkitRunnable {
 
     private Main plugin;
     private Set<Byte> transparentTypeIds;
+    private TargetHelper targetHelper;
 
     public LookThread(Main plugin) {
         this.plugin = plugin;
+        this.targetHelper = new TargetHelper(plugin);
         this.transparentTypeIds = new TreeSet<>();
 
         transparentTypeIds.add((byte) 0);
@@ -38,14 +40,14 @@ public class LookThread extends BukkitRunnable {
                 continue;
             }
 
-            List<LivingEntity> entities = TargetHelper.getLivingTargets(player, plugin.configStore.lookDistance);
+            List<LivingEntity> entities = targetHelper.getLivingTargets(player, plugin.configStore.lookDistance);
             if (!entities.isEmpty()) {
                 for (LivingEntity livingEntity : entities) {
                     if (!plugin.healthUtil.matchesRequirements(player, livingEntity)) continue;
 
                     String name = plugin.healthUtil.getName(livingEntity, player);
 
-                    if (TargetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.healthUtil.isBlacklisted(livingEntity, name)) {
+                    if (targetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.healthUtil.isBlacklisted(livingEntity, name)) {
                         plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth());
                         break;
                     }

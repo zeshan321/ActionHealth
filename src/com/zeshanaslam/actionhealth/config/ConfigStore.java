@@ -47,6 +47,8 @@ public class ConfigStore {
     public int limitHealth;
     public boolean showNPC;
     public boolean showMiniaturePets;
+    public double lookDot;
+    public double lookTolerance;
     public ActionStore actionStore;
 
     public ConfigStore(Main plugin) {
@@ -174,5 +176,13 @@ public class ConfigStore {
         }
         showMiniaturePets = plugin.getConfig().getBoolean("ShowMiniaturePets");
         actionStore = new ActionStore(plugin);
+
+        if (plugin.getConfig().contains("LookValues")) {
+            lookDot = plugin.getConfig().getDouble("LookValues.Dot");
+            lookTolerance = plugin.getConfig().getDouble("LookValues.Tolerance");
+        } else {
+            lookDot = 0;
+            lookTolerance = 4;
+        }
     }
 }

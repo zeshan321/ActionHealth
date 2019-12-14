@@ -1,5 +1,6 @@
 package com.zeshanaslam.actionhealth.utils;
 
+import com.zeshanaslam.actionhealth.Main;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -17,12 +18,18 @@ import java.util.Set;
  */
 public class TargetHelper {
 
+    private Main main;
+
+    public TargetHelper(Main main) {
+        this.main = main;
+    }
+
     /**
      * <p>Number of pixels that end up displaying about 1 degree of vision in the client window</p>
      * <p>Not really useful since you can't get the client's window size, but I added it in case
      * it becomes useful sometime</p>
      */
-    private static final int PIXELS_PER_DEGREE = 35;
+    private final int PIXELS_PER_DEGREE = 35;
 
     /**
      * <p>Gets all entities the player is looking at within the range</p>
@@ -32,8 +39,8 @@ public class TargetHelper {
      * @param range  maximum range to check
      * @return all entities in the player's vision line
      */
-    public static List<LivingEntity> getLivingTargets(LivingEntity source, double range) {
-        return getLivingTargets(source, range, 4);
+    public List<LivingEntity> getLivingTargets(LivingEntity source, double range) {
+        return getLivingTargets(source, range, main.configStore.lookTolerance);
     }
 
     /**
@@ -45,7 +52,7 @@ public class TargetHelper {
      * @param tolerance tolerance of the line calculation
      * @return all entities in the player's vision line
      */
-    public static List<LivingEntity> getLivingTargets(LivingEntity source, double range, double tolerance) {
+    public List<LivingEntity> getLivingTargets(LivingEntity source, double range, double tolerance) {
         if (source == null) {
             return new ArrayList<>();
         }
@@ -66,6 +73,7 @@ public class TargetHelper {
             double sinSquared = 1 - cosSquared;
             double dSquared = rLengthSq * sinSquared;
 
+            System.out.println(dSquared);
             // If close enough to vision line, return the entity
             if (dSquared < tolerance) targets.add((LivingEntity) entity);
         }
@@ -81,8 +89,8 @@ public class TargetHelper {
      * @param range  maximum range to check
      * @return entity player is looing at or null if not found
      */
-    public static LivingEntity getLivingTarget(LivingEntity source, double range) {
-        return getLivingTarget(source, range, 4);
+    public LivingEntity getLivingTarget(LivingEntity source, double range) {
+        return getLivingTarget(source, range, main.configStore.lookTolerance);
     }
 
     /**
@@ -94,7 +102,7 @@ public class TargetHelper {
      * @param tolerance tolerance of the line calculation
      * @return entity player is looking at or null if not found
      */
-    public static LivingEntity getLivingTarget(LivingEntity source, double range, double tolerance) {
+    public LivingEntity getLivingTarget(LivingEntity source, double range, double tolerance) {
         List<LivingEntity> targets = getLivingTargets(source, range, tolerance);
         if (targets.size() == 0) return null;
         LivingEntity target = targets.get(0);
@@ -117,7 +125,7 @@ public class TargetHelper {
      * @param range  range of the cone
      * @return list of targets
      */
-    public static List<LivingEntity> getConeTargets(LivingEntity source, double arc, double range) {
+    public List<LivingEntity> getConeTargets(LivingEntity source, double arc, double range) {
         List<LivingEntity> targets = new ArrayList<LivingEntity>();
         List<Entity> list = source.getNearbyEntities(range, range, range);
         if (arc <= 0) return targets;
@@ -159,7 +167,7 @@ public class TargetHelper {
      * @param target target to check against
      * @return true if the target is in front of the entity
      */
-    public static boolean isInFront(Entity entity, Entity target) {
+    public boolean isInFront(Entity entity, Entity target) {
         if (entity.getWorld() != target.getWorld())
             return false;
 
@@ -168,7 +176,7 @@ public class TargetHelper {
         Vector relative = target.getLocation().subtract(entity.getLocation()).toVector();
 
         // If the dot product is positive, the target is in front
-        return facing.dot(relative) >= 0;
+        return facing.dot(relative) >= main.configStore.lookDot;
     }
 
     /**
@@ -179,7 +187,7 @@ public class TargetHelper {
      * @param angle  angle to restrict it to (0-360)
      * @return true if the target is in front of the entity
      */
-    public static boolean isInFront(Entity entity, Entity target, double angle) {
+    public boolean isInFront(Entity entity, Entity target, double angle) {
         if (angle <= 0) return false;
         if (angle >= 360) return true;
 
@@ -199,7 +207,7 @@ public class TargetHelper {
      * @param target target to check against
      * @return true if the target is behind the entity
      */
-    public static boolean isBehind(Entity entity, Entity target) {
+    public boolean isBehind(Entity entity, Entity target) {
         return !isInFront(entity, target);
     }
 
@@ -211,7 +219,7 @@ public class TargetHelper {
      * @param angle  angle to restrict it to (0-360)
      * @return true if the target is behind the entity
      */
-    public static boolean isBehind(Entity entity, Entity target, double angle) {
+    public boolean isBehind(Entity entity, Entity target, double angle) {
         if (angle <= 0) return false;
         if (angle >= 360) return true;
 
@@ -231,7 +239,7 @@ public class TargetHelper {
      * @param loc2 second location
      * @return the location of obstruction or null if not obstructed
      */
-    public static boolean isObstructed(Location loc1, Location loc2) {
+    public boolean isObstructed(Location loc1, Location loc2) {
         if (loc1.getX() == loc2.getX() && loc1.getY() == loc2.getY() && loc1.getZ() == loc2.getZ()) {
             return false;
         }
@@ -256,7 +264,7 @@ public class TargetHelper {
      * @param throughWall whether or not going through walls is allowed
      * @return the farthest open location along the path
      */
-    public static Location getOpenLocation(Location loc1, Location loc2, boolean throughWall) {
+    public Location getOpenLocation(Location loc1, Location loc2, boolean throughWall) {
         // Special case
         if (loc1.getX() == loc2.getX() && loc1.getY() == loc2.getY() && loc1.getZ() == loc2.getZ()) {
             return loc1;
@@ -295,7 +303,7 @@ public class TargetHelper {
         }
     }
 
-    public static Block getTarget(Location from, int distance, byte... transparentTypeIds) {
+    public Block getTarget(Location from, int distance, byte... transparentTypeIds) {
         if (transparentTypeIds.length == 0) {
             return getTarget(from, distance, (Set<Byte>) null);
         } else {
@@ -305,7 +313,7 @@ public class TargetHelper {
         }
     }
 
-    public static Block getTarget(Location from, int distance, Set<Byte> transparentTypeIds) {
+    public Block getTarget(Location from, int distance, Set<Byte> transparentTypeIds) {
         BlockIterator itr = new BlockIterator(from, 0, distance);
         while (itr.hasNext()) {
             Block block = itr.next();
@@ -320,19 +328,19 @@ public class TargetHelper {
         return null;
     }
 
-    public static Block getTarget(LivingEntity from, int distance, Set<Byte> transparentTypeIds) {
+    public Block getTarget(LivingEntity from, int distance, Set<Byte> transparentTypeIds) {
         return getTarget(from.getEyeLocation(), distance, transparentTypeIds);
     }
 
-    public static Block getTarget(LivingEntity from, int distance, byte... transparentTypeIds) {
+    public Block getTarget(LivingEntity from, int distance, byte... transparentTypeIds) {
         return getTarget(from.getEyeLocation(), distance, transparentTypeIds);
     }
 
-    public static boolean canSee(LivingEntity from, Location to, Set<Byte> transparentTypeIds) {
+    public boolean canSee(LivingEntity from, Location to, Set<Byte> transparentTypeIds) {
         return getTarget(from, (int) Math.ceil(from.getLocation().distance(to)), transparentTypeIds) == null;
     }
 
-    public static boolean canSee(LivingEntity from, Location to, byte... transparentTypeIds) {
+    public boolean canSee(LivingEntity from, Location to, byte... transparentTypeIds) {
         return getTarget(from, (int) Math.ceil(from.getLocation().distance(to)), transparentTypeIds) == null;
     }
 }
