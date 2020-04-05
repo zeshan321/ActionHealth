@@ -76,6 +76,12 @@ Blacklist:
 Show On Look: true
 Look Distance: 10
 
+LookValues:
+  # If the dot product is positive, the target is in front
+  Dot: 0
+  # Tolerance of the line calculation
+  Tolerance: 4
+
 # Check if player can see entity before sending health.
 Can See: true
 
