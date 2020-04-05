@@ -72,6 +72,10 @@ Remember Toggle: false
 Blacklist:
   - 'CCPD Officer'
 
+# Whitelist by entity name or entity display name.
+# Also supports MythicMobs using the internal name.
+Whitelist: []
+
 # Show the health of the entity that the player is looking at.
 Show On Look: true
 Look Distance: 10

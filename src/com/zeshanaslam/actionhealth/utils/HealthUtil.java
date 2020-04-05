@@ -86,6 +86,11 @@ public class HealthUtil {
         String name = getName(entity, receiver);
         if (plugin.healthUtil.isBlacklisted(entity, name)) return null;
         if (plugin.configStore.stripName) name = ChatColor.stripColor(name);
+        if (plugin.configStore.isUsingWhiteList()) {
+            if (!plugin.healthUtil.isWhiteListed(entity, name)) {
+                return null;
+            }
+        }
 
         if (entity instanceof Player) {
             String displayName;
@@ -354,5 +359,16 @@ public class HealthUtil {
         }
 
         return plugin.configStore.blacklist.contains(name);
+    }
+
+    public boolean isWhiteListed(Entity entity, String name) {
+        if (plugin.mythicMobsEnabled) {
+            String mythicName = new MythicMobsSupport().getMythicName(entity);
+            if (mythicName != null && plugin.configStore.whitelist.contains(mythicName)) {
+                return true;
+            }
+        }
+
+        return plugin.configStore.whitelist.contains(name);
     }
 }

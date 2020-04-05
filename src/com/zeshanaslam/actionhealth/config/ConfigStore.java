@@ -51,6 +51,7 @@ public class ConfigStore {
     public double lookTolerance;
     public long checkTicks;
     public ActionStore actionStore;
+    public List<String> whitelist = new ArrayList<>();
 
     public ConfigStore(Main plugin) {
         // Clear settings for reloads
@@ -58,6 +59,7 @@ public class ConfigStore {
         regions.clear();
         blacklist.clear();
         translate.clear();
+        whitelist.clear();
 
         // Check if using MVdWPlaceholderAPI
         hasMVdWPlaceholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI");
@@ -117,6 +119,10 @@ public class ConfigStore {
         // New options
         if (plugin.getConfig().contains("Blacklist")) {
             blacklist.addAll(plugin.getConfig().getStringList("Blacklist").stream().map(s -> ChatColor.translateAlternateColorCodes('&', s)).collect(Collectors.toList()));
+        }
+
+        if (plugin.getConfig().contains("Whitelist")) {
+            whitelist.addAll(plugin.getConfig().getStringList("Whitelist").stream().map(s -> ChatColor.translateAlternateColorCodes('&', s)).collect(Collectors.toList()));
         }
 
         if (plugin.getConfig().contains("Toggle Message")) {
@@ -191,5 +197,9 @@ public class ConfigStore {
             plugin.taskID = -1;
             showOnLook = false;
         }
+    }
+
+    public boolean isUsingWhiteList() {
+        return !whitelist.isEmpty();
     }
 }
