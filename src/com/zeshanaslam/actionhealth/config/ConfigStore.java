@@ -49,6 +49,7 @@ public class ConfigStore {
     public boolean showMiniaturePets;
     public double lookDot;
     public double lookTolerance;
+    public long checkTicks;
     public ActionStore actionStore;
 
     public ConfigStore(Main plugin) {
@@ -57,8 +58,6 @@ public class ConfigStore {
         regions.clear();
         blacklist.clear();
         translate.clear();
-
-        if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
 
         // Check if using MVdWPlaceholderAPI
         hasMVdWPlaceholderAPI = Bukkit.getPluginManager().isPluginEnabled("MVdWPlaceholderAPI");
@@ -120,19 +119,6 @@ public class ConfigStore {
             blacklist.addAll(plugin.getConfig().getStringList("Blacklist").stream().map(s -> ChatColor.translateAlternateColorCodes('&', s)).collect(Collectors.toList()));
         }
 
-        if (plugin.getConfig().contains("Show On Look")) {
-            showOnLook = plugin.getConfig().getBoolean("Show On Look");
-            lookDistance = plugin.getConfig().getDouble("Look Distance");
-
-            if (showOnLook) {
-                BukkitTask bukkitTask = new LookThread(plugin).runTaskTimer(plugin, 0, 20);
-                plugin.taskID = bukkitTask.getTaskId();
-            }
-        } else {
-            plugin.taskID = -1;
-            showOnLook = false;
-        }
-
         if (plugin.getConfig().contains("Toggle Message")) {
             toggleMessage = plugin.getConfig().getString("Toggle Message");
         }
@@ -183,6 +169,27 @@ public class ConfigStore {
         } else {
             lookDot = 0;
             lookTolerance = 4;
+        }
+
+        if (plugin.getConfig().contains("LookValues.CheckTicks")) {
+            checkTicks = plugin.getConfig().getLong("LookValues.CheckTicks");
+        } else {
+            checkTicks = 0;
+        }
+
+        if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
+
+        if (plugin.getConfig().contains("Show On Look")) {
+            showOnLook = plugin.getConfig().getBoolean("Show On Look");
+            lookDistance = plugin.getConfig().getDouble("Look Distance");
+
+            if (showOnLook) {
+                BukkitTask bukkitTask = new LookThread(plugin).runTaskTimer(plugin, 0, checkTicks);
+                plugin.taskID = bukkitTask.getTaskId();
+            }
+        } else {
+            plugin.taskID = -1;
+            showOnLook = false;
         }
     }
 }

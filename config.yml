@@ -77,6 +77,8 @@ Show On Look: true
 Look Distance: 10
 
 LookValues:
+  # How often (in ticks) to check if player is looking at an entity. Increase if lagging, maybe to 10 or 20.
+  CheckTicks: 0
   # If the dot product is positive, the target is in front
   Dot: 0
   # Tolerance of the line calculation

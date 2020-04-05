@@ -69,7 +69,7 @@ public class Main extends JavaPlugin {
             langUtilsEnabled = true;
         }
 
-        actionTask = new ActionTask(this).runTaskTimer(this, 0, 20);
+        actionTask = new ActionTask(this).runTaskTimer(this, 0, configStore.checkTicks);
     }
 
     @Override
