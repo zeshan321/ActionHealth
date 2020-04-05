@@ -72,7 +72,6 @@ public class WorldGuardAPI {
                 }
             }
 
-            // Ugh guys, API much?
             try {
                 Class<?> vectorClass = Class.forName("com.sk89q.worldedit.Vector");
                 vectorConstructor = vectorClass.getConstructor(Double.TYPE, Double.TYPE, Double.TYPE);
@@ -119,9 +118,7 @@ public class WorldGuardAPI {
     private ApplicableRegionSet getRegionSet(Location location) {
         RegionManager regionManager = getRegionManager(location.getWorld());
         if (regionManager == null) return null;
-        // The Location version of this method is gone in 7.0
-        // Oh and then they also randomly changed the Vector class at some point without even a version bump.
-        // So awesome!
+
         try {
             Object vector = vectorConstructorAsAMethodBecauseWhyNot == null
                     ? vectorConstructor.newInstance(location.getX(), location.getY(), location.getZ())

@@ -73,7 +73,6 @@ public class TargetHelper {
             double sinSquared = 1 - cosSquared;
             double dSquared = rLengthSq * sinSquared;
 
-            System.out.println(dSquared);
             // If close enough to vision line, return the entity
             if (dSquared < tolerance) targets.add((LivingEntity) entity);
         }
