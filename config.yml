@@ -116,7 +116,7 @@ Use Client Language: false
 # If enabled, when a player gets into combat they will be tagged for the configurable amount of time.
 # When the enemy triggers an action the provided message will be sent.
 # Supports all placeholders from above.
-# Supported events: CONSUME, RIGHTCLICK, LEFTCLICK, SWAP
+# Supported events: CONSUME, RIGHTCLICK, LEFTCLICK, SWAP, DAMAGE
 Action:
   Enabled: false
   # In seconds
@@ -132,3 +132,8 @@ Action:
     SWAP:
       ENDER_PEARL: '&7&l{name} swapped to &cender pearls&7&l. {usestyle}&7&l'
       POTION: '&7&l{name} swapped to &cpotion&7&l. {usestyle}&7&l'
+    DAMAGE:
+      ANY: '&7&l{name}: {usestyle}'
+      # Supports DamageCause if 'ANY' not being used
+      #LAVA: '&4On fire!'
+      #ENTITY_SWEEP_ATTACK: '&7You swept them!'

@@ -29,6 +29,10 @@ public class HealthListeners implements Listener {
             return;
         }
 
+        if (plugin.configStore.actionStore.isUsingAnyDamageCause) {
+            return;
+        }
+
         Entity damaged = event.getEntity();
         Player player = null;
         if (event.getDamager() instanceof Projectile) {

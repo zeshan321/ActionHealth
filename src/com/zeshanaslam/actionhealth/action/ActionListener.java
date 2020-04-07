@@ -1,11 +1,16 @@
 package com.zeshanaslam.actionhealth.action;
 
 import com.zeshanaslam.actionhealth.Main;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -15,6 +20,7 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,21 +28,50 @@ import java.util.List;
 public class ActionListener implements Listener {
 
     private final Main main;
+    private ActionHelper actionHelper;
 
-    public ActionListener(Main main) {
+    public ActionListener(Main main, ActionHelper actionHelper) {
         this.main = main;
+        this.actionHelper = actionHelper;
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onComabat(EntityDamageByEntityEvent event) {
+    public void onCombat(EntityDamageByEntityEvent event) {
         if (!main.configStore.actionStore.enabled)
             return;
 
-        if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
-            Player damager = (Player) event.getDamager();
+        ActionStore.ActionType actionType = ActionStore.ActionType.DAMAGE;
+        Player damager = actionHelper.getDamagerFromEntity(event.getDamager());
+        if (damager == null && event.getDamager() instanceof Player) {
+            damager = (Player) event.getDamager();
+        }
+
+        if (damager != null && event.getEntity() instanceof Player) {
             Player damaged = (Player) event.getEntity();
 
             main.configStore.actionStore.addTag(damager.getUniqueId(), damaged.getUniqueId());
+        } else if (damager != null && main.configStore.actionStore.events.containsKey(actionType)) {
+            main.configStore.actionStore.addTag(damager.getUniqueId(), event.getEntity().getUniqueId());
+        }
+
+        if (!main.configStore.actionStore.isUsingAnyDamageCause) {
+            EntityDamageEvent.DamageCause damageCause = event.getCause();
+            if (event.getEntity() instanceof LivingEntity)
+                actionHelper.executeTriggers(actionType, (LivingEntity) event.getEntity(), damageCause.name());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent event) {
+        if (!main.configStore.actionStore.enabled)
+            return;
+
+        Entity entity = event.getEntity();
+        ActionStore.ActionType actionType = ActionStore.ActionType.DAMAGE;
+
+        if (entity instanceof LivingEntity) {
+            LivingEntity livingEntity = (LivingEntity) entity;
+            actionHelper.executeTriggers(actionType, livingEntity, "ANY", livingEntity.getHealth() - event.getFinalDamage());
         }
     }
 
@@ -48,7 +83,7 @@ public class ActionListener implements Listener {
         ActionStore.ActionType actionType = ActionStore.ActionType.CONSUME;
         Player player = event.getPlayer();
 
-        executeTriggers(actionType, player, event.getItem());
+        actionHelper.executeTriggers(actionType, player, event.getItem());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -61,7 +96,7 @@ public class ActionListener implements Listener {
 
         ItemStack itemStack = player.getInventory().getItem(event.getNewSlot());
 
-        executeTriggers(actionType, player, itemStack);
+        actionHelper.executeTriggers(actionType, player, itemStack);
     }
 
     @EventHandler
@@ -75,42 +110,16 @@ public class ActionListener implements Listener {
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             ActionStore.ActionType actionType = ActionStore.ActionType.RIGHTCLICK;
 
-            executeTriggers(actionType, player, itemStack);
+            actionHelper.executeTriggers(actionType, player, itemStack);
         } else  if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             ActionStore.ActionType actionType = ActionStore.ActionType.LEFTCLICK;
-            executeTriggers(actionType, player, itemStack);
+            actionHelper.executeTriggers(actionType, player, itemStack);
         }
     }
 
-    private void executeTriggers(ActionStore.ActionType actionType, Player player, ItemStack itemStack) {
-        if (itemStack != null) {
-            for (String name: getName(itemStack))
-                main.configStore.actionStore.triggerAction(actionType, player, name);
-        }
-    }
-
-    private List<String> getName(ItemStack itemStack) {
-        List<String> possibleMaterials = new ArrayList<>();
-
-        String name = itemStack.getType().name();
-        possibleMaterials.add(name);
-
-        if (itemStack.hasItemMeta()) {
-            ItemMeta itemMeta = itemStack.getItemMeta();
-            if (itemMeta instanceof PotionMeta) {
-                PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
-
-                PotionData potionData = potionMeta.getBasePotionData();
-                possibleMaterials.add(potionData.getType().getEffectType().getName() + "_" + name);
-
-                if (potionMeta.hasCustomEffects()) {
-                    for (PotionEffect potionEffect : potionMeta.getCustomEffects()) {
-                        possibleMaterials.add(potionEffect.getType().getName() + "_" + name);
-                    }
-                }
-            }
-        }
-
-        return possibleMaterials;
+    @EventHandler
+    public void onDeath(EntityDeathEvent event) {
+        Entity entity = event.getEntity();
+        main.configStore.actionStore.remove(entity.getUniqueId());
     }
 }

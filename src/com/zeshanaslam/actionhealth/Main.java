@@ -1,6 +1,7 @@
 package com.zeshanaslam.actionhealth;
 
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.zeshanaslam.actionhealth.action.ActionHelper;
 import com.zeshanaslam.actionhealth.action.ActionListener;
 import com.zeshanaslam.actionhealth.action.ActionTask;
 import com.zeshanaslam.actionhealth.commands.HealthCommand;
@@ -47,7 +48,7 @@ public class Main extends JavaPlugin {
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
-        getServer().getPluginManager().registerEvents(new ActionListener(this), this);
+        getServer().getPluginManager().registerEvents(new ActionListener(this, new ActionHelper(this)), this);
 
         // Register commands
         getCommand("Actionhealth").setExecutor(new HealthCommand(this));
