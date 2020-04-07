@@ -121,7 +121,7 @@ Action:
   Enabled: false
   # In seconds
   TagLength: 20
-  # Amount of players a player can tag during combat. -1 for unlimited
+  # Amount of entities a player can tag during combat. -1 for unlimited
   TagAmount: 2
   Events:
     CONSUME:
