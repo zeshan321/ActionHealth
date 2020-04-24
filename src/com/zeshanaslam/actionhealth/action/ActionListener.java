@@ -106,6 +106,8 @@ public class ActionListener implements Listener {
 
         Player player = event.getPlayer();
         ItemStack itemStack = event.getItem();
+        if (itemStack == null)
+            return;
 
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             ActionStore.ActionType actionType = ActionStore.ActionType.RIGHTCLICK;

@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.UUID;
 
 public class HealthUtil {
 
@@ -370,5 +371,17 @@ public class HealthUtil {
         }
 
         return plugin.configStore.whitelist.contains(name);
+    }
+
+    public void setActionToggle(UUID uuid, boolean disable) {
+        if (disable) {
+            plugin.toggle.add(uuid);
+        } else {
+            plugin.toggle.remove(uuid);
+        }
+    }
+
+    public boolean isActionDisabled(UUID uuid) {
+        return plugin.toggle.contains(uuid);
     }
 }
