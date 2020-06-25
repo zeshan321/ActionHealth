@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: 
-Class-Path: MVdWPlaceholderAPI.jar spigot-api-1.16.1-R0.1-SNAPSHOT-shade
- d.jar worldguard-bukkit-7.0.2.jar jsr305-3.0.2.jar LangUtils-1.9.jar My
- thicMobs-4.9.1.jar PlaceholderAPI-2.10.6.jar
-
