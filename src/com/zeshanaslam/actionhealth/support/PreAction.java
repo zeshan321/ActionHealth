@@ -9,11 +9,11 @@ public class PreAction {
 
     private final String packageVersion = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
 
-    public PreAction(Player player, String message) {
+    public PreAction(Player player, String message) throws ClassNotFoundException {
         try {
             Object chatComponentText = getNMSClass("ChatComponentText").getConstructor(new Class[]{String.class}).newInstance(message);
             Object chatMessageType = getNMSClass("ChatMessageType").getField("GAME_INFO").get(null);
-            Object packetPlayOutChat = getNMSClass("PacketPlayOutChat").getConstructor(new Class[]{getNMSClass("IChatBaseComponent"), getNMSClass("ChatMessageType")}).newInstance(chatComponentText, chatMessageType);
+            Object packetPlayOutChat = getNMSClass("PacketPlayOutChat").getConstructor(new Class[]{getNMSClass("IChatBaseComponent"), getNMSClass("ChatMessageType"), Class.forName("java.util.UUID")}).newInstance(chatComponentText, chatMessageType, player.getUniqueId());
             Object getHandle = player.getClass().getMethod("getHandle", new Class[0]).invoke(player);
             Object playerConnection = getHandle.getClass().getField("playerConnection").get(getHandle);
 
