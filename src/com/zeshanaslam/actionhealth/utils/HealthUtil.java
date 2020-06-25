@@ -2,15 +2,11 @@ package com.zeshanaslam.actionhealth.utils;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.api.HealthSendEvent;
-import com.zeshanaslam.actionhealth.support.LangUtilsSupport;
-import com.zeshanaslam.actionhealth.support.McMMOSupport;
-import com.zeshanaslam.actionhealth.support.MythicMobsSupport;
-import com.zeshanaslam.actionhealth.support.PreAction;
+import com.zeshanaslam.actionhealth.support.*;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -242,8 +238,10 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_") || plugin.configStore.mcVersion.startsWith("v1_15_") || plugin.configStore.mcVersion.startsWith("v1_16_")) {
+            if(plugin.configStore.mcVersion.equals("v1_16_R1")){
                 new PreAction(player, message);
+            } else if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_") || plugin.configStore.mcVersion.startsWith("v1_15_")) {
+                new LegacyPreAction(player, message);
             } else if (!(plugin.configStore.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.configStore.mcVersion.contains("v1_7_")))) {
                 Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.configStore.mcVersion + ".entity.CraftPlayer");
                 Object p = c1.cast(player);
