@@ -122,6 +122,7 @@ public class HealthUtil {
         output = output.replace("{name}", name);
         output = output.replace("{health}", String.valueOf((int) health));
         output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
+        output = output.replace("{percenthealth}", String.valueOf((int) ((health / maxHealth) * 100.0)));
         output = output.replace("{opponentlastdamage}", String.valueOf((int) entity.getLastDamage()));
 
         if (output.contains("{usestyle}")) {

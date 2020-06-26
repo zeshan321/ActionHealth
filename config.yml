@@ -5,6 +5,7 @@
 # {usestyle} will use the defined chars.
 # {displayname} will use player/mob custom name.
 # {opponentlastdamage} the amount of damage the enemy last received.
+# {percenthealth} displays the percentage of health left.
 # Has support for PlaceholderAPI and MVdWPlaceholderAPI.
 Health Message: '&7&l{name}: {usestyle}'
 
