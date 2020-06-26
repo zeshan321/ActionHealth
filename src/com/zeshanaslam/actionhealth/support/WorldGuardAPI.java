@@ -1,5 +1,6 @@
 package com.zeshanaslam.actionhealth.support;
 
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -61,7 +62,7 @@ public class WorldGuardAPI {
                     return;
                 }
             } else {
-                regionContainer = worldGuardPlugin.getRegionContainer();
+                regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();
                 try {
                     regionContainerGetMethod = regionContainer.getClass().getMethod("get", World.class);
                 } catch (Exception ex) {
