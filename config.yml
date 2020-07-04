@@ -61,8 +61,13 @@ Disabled regions:
 # Disable ActionHealth in regions where PvP is denied.
 Region PvP: true
 
-# Limits the health style to a certain amount of symbols.
+# Limits the health style to a certain amount of symbols. Static limit (-1 to disable)
+# Limit health WILL accurately still display the entities health.
 Limit Health: 10
+
+# If 'Limit Health' is set to -1. With 'Upper Limit Health' you can trigger 'Limit Health' logic to prevent 'Use Style' going off screen'
+# '40 -> 10' = If health over 40, use limit health 10. Leave empty to disable
+Upper Limit Health: "40 -> 10"
 
 # Saves players /actionhealth toggle state.
 # Uses flat file. If interested in SQL support ask in discussion.

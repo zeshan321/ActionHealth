@@ -127,13 +127,13 @@ public class HealthUtil {
 
         if (output.contains("{usestyle}")) {
             StringBuilder style = new StringBuilder();
-            int left = plugin.configStore.limitHealth;
-            double heart = maxHealth / plugin.configStore.limitHealth;
+            int left = getLimitHealth(maxHealth);
+            double heart = maxHealth / getLimitHealth(maxHealth);
             double halfHeart = heart / 2;
             double tempHealth = health;
 
             if (maxHealth != health && health >= 0 && !entity.isDead()) {
-                for (int i = 0; i < plugin.configStore.limitHealth; i++) {
+                for (int i = 0; i < getLimitHealth(maxHealth); i++) {
                     if (tempHealth - heart > 0) {
                         tempHealth = tempHealth - heart;
 
@@ -174,6 +174,19 @@ public class HealthUtil {
             output = healthSendEvent.getMessage();
 
         return output;
+    }
+
+    public int getLimitHealth(double maxHealth) {
+        if (plugin.configStore.limitHealth == -1) {
+            int health = (int) maxHealth;
+            if (plugin.configStore.upperLimit != null) {
+                return (health >= plugin.configStore.upperLimitStart) ? plugin.configStore.upperLimitLength : health;
+            }
+
+            return health;
+        }
+
+        return plugin.configStore.limitHealth;
     }
 
     public String getName(LivingEntity entity, Player receiver) {

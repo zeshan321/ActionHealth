@@ -52,6 +52,9 @@ public class ConfigStore {
     public long checkTicks;
     public ActionStore actionStore;
     public List<String> whitelist = new ArrayList<>();
+    public String upperLimit;
+    public int upperLimitStart;
+    public int upperLimitLength;
 
     public ConfigStore(Main plugin) {
         // Clear settings for reloads
@@ -196,6 +199,16 @@ public class ConfigStore {
         } else {
             plugin.taskID = -1;
             showOnLook = false;
+        }
+
+        if (plugin.getConfig().contains("Upper Limit Health")) {
+            upperLimit = plugin.getConfig().getString("Upper Limit Health");
+
+            String[] limits = upperLimit.split(" -> ");
+            upperLimitStart = Integer.parseInt(limits[0]);
+            upperLimitLength = Integer.parseInt(limits[1]);
+        } else {
+            upperLimit = null;
         }
     }
 
