@@ -1,13 +1,11 @@
 package com.zeshanaslam.actionhealth;
 
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.zeshanaslam.actionhealth.action.ActionHelper;
 import com.zeshanaslam.actionhealth.action.ActionListener;
 import com.zeshanaslam.actionhealth.action.ActionTask;
 import com.zeshanaslam.actionhealth.commands.HealthCommand;
 import com.zeshanaslam.actionhealth.config.ConfigStore;
 import com.zeshanaslam.actionhealth.events.HealthListeners;
-import com.zeshanaslam.actionhealth.support.WorldGuardAPI;
 import com.zeshanaslam.actionhealth.utils.HealthUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -21,8 +19,7 @@ import java.util.UUID;
 public class Main extends JavaPlugin {
 
     public ConfigStore configStore;
-    public WorldGuardPlugin worldGuardPlugin;
-    public WorldGuardAPI worldGuardAPI;
+    public boolean worldGuardEnabled;
     public HealthUtil healthUtil;
     public int taskID = -1;
     public boolean mcMMOEnabled;
@@ -53,10 +50,7 @@ public class Main extends JavaPlugin {
         // Register commands
         getCommand("Actionhealth").setExecutor(new HealthCommand(this));
 
-        if (Bukkit.getServer().getPluginManager().isPluginEnabled("WorldGuard")) {
-            this.worldGuardPlugin = ((WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard"));
-            this.worldGuardAPI = new WorldGuardAPI(this);
-        }
+        worldGuardEnabled = Bukkit.getServer().getPluginManager().isPluginEnabled("WorldGuard");
 
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("mcMMO")) {
             mcMMOEnabled = true;

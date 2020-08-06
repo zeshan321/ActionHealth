@@ -1,5 +1,6 @@
 package com.zeshanaslam.actionhealth.utils;
 
+import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.api.HealthSendEvent;
 import com.zeshanaslam.actionhealth.support.*;
@@ -13,6 +14,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.codemc.worldguardwrapper.WorldGuardWrapper;
+import org.codemc.worldguardwrapper.region.IWrappedRegion;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -102,14 +105,15 @@ public class HealthUtil {
 
             output = output.replace("{displayname}", displayName);
 
-            // Placeholder apis
+            // Set placeholders as attacker
             if (plugin.configStore.hasMVdWPlaceholderAPI) {
+                output = output.replace("ATTACKEDPLAYER_", "");
                 output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(player, output);
             }
 
             if (plugin.configStore.hasPlaceholderAPI) {
+                output = output.replace("ATTACKEDPLAYER_", "");
                 output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
-                output = me.clip.placeholderapi.PlaceholderAPI.setRelationalPlaceholders(receiver, player, output);
             }
         } else {
             if (!plugin.configStore.healthMessageOther.isEmpty()) {
@@ -117,6 +121,15 @@ public class HealthUtil {
             }
 
             output = output.replace("{displayname}", name);
+        }
+
+        // Set placeholders as receiver
+        if (plugin.configStore.hasMVdWPlaceholderAPI) {
+            output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(receiver, output);
+        }
+
+        if (plugin.configStore.hasPlaceholderAPI) {
+            output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(receiver, output);
         }
 
         output = output.replace("{name}", name);
@@ -304,12 +317,12 @@ public class HealthUtil {
     }
 
     public boolean isDisabled(Location location) {
-        if (plugin.worldGuardPlugin == null) {
+        if (!plugin.worldGuardEnabled) {
             return false;
         }
 
-        for (String regionName : plugin.worldGuardAPI.getRegionNames(location)) {
-            if (plugin.configStore.regions.contains(regionName)) {
+        for (IWrappedRegion region : WorldGuardWrapper.getInstance().getRegions(location)) {
+            if (plugin.configStore.regions.contains(region.getId())) {
                 return true;
             }
         }

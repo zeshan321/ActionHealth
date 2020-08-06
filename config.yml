@@ -6,7 +6,11 @@
 # {displayname} will use player/mob custom name.
 # {opponentlastdamage} the amount of damage the enemy last received.
 # {percenthealth} displays the percentage of health left.
-# Has support for PlaceholderAPI and MVdWPlaceholderAPI.
+#
+# For PlaceholderAPI or MVdWPlaceholderAPI:
+# By default placeholders will be retrieved as the attacking player.
+# Prefix with 'ATTACKEDPLAYER_' to get the placeholders as the attacked player
+# i.e %player_exp% would be %ATTACKEDPLAYER_player_exp%.
 Health Message: '&7&l{name}: {usestyle}'
 
 # If set empty it will default to the one above.
