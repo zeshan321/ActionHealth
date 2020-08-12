@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: PlaceholderAPI-2.10.9.jar MVdWPlaceholderAPI.jar LangUtils-1
- .9.jar MythicMobs-4.9.1.jar worldguardwrapper-1.1.9-SNAPSHOT.jar spigot
- -1.16.2.jar
-
