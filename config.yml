@@ -11,7 +11,8 @@
 # By default placeholders will be retrieved as the attacking player.
 # Prefix with 'ATTACKEDPLAYER_' to get the placeholders as the attacked player
 # i.e %player_exp% would be %ATTACKEDPLAYER_player_exp%.
-Health Message: '&7&l{name}: {usestyle}'
+Health Message: Health Message: '&6&l{name}: &a&l{health} / {maxhealth}'
+
 
 # If set empty it will default to the one above.
 # This message is sent to all non player entities.
