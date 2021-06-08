@@ -76,8 +76,10 @@ public class ActionHelper {
                 PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
 
                 PotionData potionData = potionMeta.getBasePotionData();
-                possibleMaterials.add(potionData.getType().getEffectType().getName() + "_" + name);
-
+                if (potionData.getType().getEffectType() != null) {
+                    possibleMaterials.add(potionData.getType().getEffectType().getName() + "_" + name);
+                }
+                
                 if (potionMeta.hasCustomEffects()) {
                     for (PotionEffect potionEffect : potionMeta.getCustomEffects()) {
                         possibleMaterials.add(potionEffect.getType().getName() + "_" + name);
