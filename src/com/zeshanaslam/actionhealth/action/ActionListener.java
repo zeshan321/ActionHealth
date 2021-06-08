@@ -4,7 +4,6 @@ import com.zeshanaslam.actionhealth.Main;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -15,15 +14,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.Potion;
-import org.bukkit.potion.PotionData;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.projectiles.ProjectileSource;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ActionListener implements Listener {
 
@@ -113,7 +103,7 @@ public class ActionListener implements Listener {
             ActionStore.ActionType actionType = ActionStore.ActionType.RIGHTCLICK;
 
             actionHelper.executeTriggers(actionType, player, itemStack);
-        } else  if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
+        } else if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             ActionStore.ActionType actionType = ActionStore.ActionType.LEFTCLICK;
             actionHelper.executeTriggers(actionType, player, itemStack);
         }

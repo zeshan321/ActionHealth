@@ -1,6 +1,5 @@
 package com.zeshanaslam.actionhealth.utils;
 
-import be.maximvdw.placeholderapi.PlaceholderAPI;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.api.HealthSendEvent;
 import com.zeshanaslam.actionhealth.support.*;
@@ -103,16 +102,16 @@ public class HealthUtil {
                 displayName = player.getDisplayName();
             }
 
-            output = output.replace("{displayname}", displayName);
+            output = replacePlaceholders(output, "displayname", displayName);
 
             // Set placeholders as attacker
             if (plugin.configStore.hasMVdWPlaceholderAPI) {
-                output = output.replace("ATTACKEDPLAYER_", "");
+                output = replacePlaceholders(output, "ATTACKEDPLAYER_", "");
                 output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(player, output);
             }
 
             if (plugin.configStore.hasPlaceholderAPI) {
-                output = output.replace("ATTACKEDPLAYER_", "");
+                output = replacePlaceholders(output, "ATTACKEDPLAYER_", "");
                 output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
             }
         } else {
@@ -120,7 +119,7 @@ public class HealthUtil {
                 output = plugin.configStore.healthMessageOther;
             }
 
-            output = output.replace("{displayname}", name);
+            output = replacePlaceholders(output, "displayname", name);
         }
 
         // Set placeholders as receiver
@@ -132,13 +131,13 @@ public class HealthUtil {
             output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(receiver, output);
         }
 
-        output = output.replace("{name}", name);
-        output = output.replace("{health}", String.valueOf((int) health));
-        output = output.replace("{maxhealth}", String.valueOf((int) maxHealth));
-        output = output.replace("{percenthealth}", String.valueOf((int) ((health / maxHealth) * 100.0)));
-        output = output.replace("{opponentlastdamage}", String.valueOf((int) entity.getLastDamage()));
+        output = replacePlaceholders(output, "name", name);
+        output = replacePlaceholders(output, "health", String.valueOf((int) health));
+        output = replacePlaceholders(output, "maxhealth", String.valueOf((int) maxHealth));
+        output = replacePlaceholders(output, "percenthealth", String.valueOf((int) ((health / maxHealth) * 100.0)));
+        output = replacePlaceholders(output, "opponentlastdamage", String.valueOf((int) entity.getLastDamage()));
 
-        if (output.contains("{usestyle}")) {
+        if (output.contains("usestyle")) {
             StringBuilder style = new StringBuilder();
             int left = getLimitHealth(maxHealth);
             double heart = maxHealth / getLimitHealth(maxHealth);
@@ -176,7 +175,7 @@ public class HealthUtil {
                 }
             }
 
-            output = output.replace("{usestyle}", style.toString());
+            output = replacePlaceholders(output, "usestyle", style.toString());
         }
 
         HealthSendEvent healthSendEvent = new HealthSendEvent(receiver, entity, output);
@@ -234,6 +233,10 @@ public class HealthUtil {
         return name;
     }
 
+    public String replacePlaceholders(String s, String key, String value) {
+        return s.replace("{" + key + "}", value).replace("{ah" + key + "}", value);
+    }
+
     private String getNameReflection(LivingEntity entity) {
         String name;
         Method getName = null;
@@ -265,7 +268,7 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if(plugin.configStore.mcVersion.equals("v1_16_R1") || plugin.configStore.mcVersion.equals("v1_16_R2") || plugin.configStore.mcVersion.equals("v1_16_R3")){
+            if (plugin.configStore.mcVersion.equals("v1_16_R1") || plugin.configStore.mcVersion.equals("v1_16_R2") || plugin.configStore.mcVersion.equals("v1_16_R3")) {
                 new PreAction(player, message);
             } else if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_") || plugin.configStore.mcVersion.startsWith("v1_15_")) {
                 new LegacyPreAction(player, message);
@@ -373,7 +376,7 @@ public class HealthUtil {
 
     private void sendMessage(Player player) {
         if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
-            plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
+            plugin.healthUtil.sendActionBar(player, replacePlaceholders(plugin.configStore.toggleMessage, "name", player.getName()));
         }
     }
 

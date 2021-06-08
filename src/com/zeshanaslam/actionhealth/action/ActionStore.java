@@ -1,4 +1,5 @@
 package com.zeshanaslam.actionhealth.action;
+
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.data.Action;
 import com.zeshanaslam.actionhealth.action.data.Tagged;
@@ -22,11 +23,11 @@ public class ActionStore {
         this.main = main;
         enabled = main.getConfig().getBoolean("Action.Enabled");
         tagLength = main.getConfig().getInt("Action.TagLength");
-        tagAmount  = main.getConfig().getInt("Action.TagAmount");
+        tagAmount = main.getConfig().getInt("Action.TagAmount");
         events = new HashMap<>();
 
-        for (String action: main.getConfig().getConfigurationSection("Action.Events").getKeys(false)) {
-            for (String type: main.getConfig().getConfigurationSection("Action.Events." + action).getKeys(false)) {
+        for (String action : main.getConfig().getConfigurationSection("Action.Events").getKeys(false)) {
+            for (String type : main.getConfig().getConfigurationSection("Action.Events." + action).getKeys(false)) {
                 String output = main.getConfig().getString("Action.Events." + action + "." + type);
                 ActionType actionType = ActionType.valueOf(action);
 
@@ -70,8 +71,8 @@ public class ActionStore {
     }
 
     private void sendMessage(LivingEntity entity, String message, Optional<Double> health) {
-        for (List<Tagged> taggedList: tagged.values()) {
-            for (Tagged tagged: taggedList) {
+        for (List<Tagged> taggedList : tagged.values()) {
+            for (Tagged tagged : taggedList) {
                 if (tagged.damaged.equals(entity.getUniqueId())) {
                     Player damager = Bukkit.getServer().getPlayer(tagged.damager);
 

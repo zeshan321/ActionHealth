@@ -42,11 +42,12 @@ public class HealthCommand implements CommandExecutor {
                     if (plugin.toggle.contains(player.getUniqueId())) {
                         plugin.toggle.remove(player.getUniqueId());
 
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.configStore.enableMessage).replace("{name}", player.getName()));
+
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.healthUtil.replacePlaceholders(plugin.configStore.enableMessage, "name", player.getName())));
                     } else {
                         plugin.toggle.add(player.getUniqueId());
 
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.configStore.disableMessage).replace("{name}", player.getName()));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.healthUtil.replacePlaceholders(plugin.configStore.disableMessage, "name", player.getName())));
                     }
 
                     if (plugin.configStore.rememberToggle) {

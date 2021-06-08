@@ -17,7 +17,7 @@ public class ActionTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        for (UUID key: main.configStore.actionStore.tagged.keySet()) {
+        for (UUID key : main.configStore.actionStore.tagged.keySet()) {
             Iterator<Tagged> taggedIterator = main.configStore.actionStore.tagged.get(key).iterator();
             while (taggedIterator.hasNext()) {
                 Tagged tagged = taggedIterator.next();

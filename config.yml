@@ -6,6 +6,7 @@
 # {displayname} will use player/mob custom name.
 # {opponentlastdamage} the amount of damage the enemy last received.
 # {percenthealth} displays the percentage of health left.
+# Note: if placeholders are being overridden by other plugins you can add 'ah' in front of it i.e {ahhealth}
 #
 # For PlaceholderAPI or MVdWPlaceholderAPI:
 # By default placeholders will be retrieved as the attacking player.

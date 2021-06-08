@@ -16,7 +16,6 @@ import org.bukkit.projectiles.ProjectileSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public class ActionHelper {
 
@@ -28,7 +27,7 @@ public class ActionHelper {
 
     public void executeTriggers(ActionStore.ActionType actionType, Player player, ItemStack itemStack) {
         if (itemStack != null) {
-            for (String name: getName(itemStack))
+            for (String name : getName(itemStack))
                 executeTriggers(actionType, player, name);
         }
     }

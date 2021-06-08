@@ -35,7 +35,7 @@ public class LookThread extends BukkitRunnable {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (plugin.toggle.contains(player.getUniqueId())) {
                 if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
-                    plugin.healthUtil.sendActionBar(player, plugin.configStore.toggleMessage.replace("{name}", player.getName()));
+                    plugin.healthUtil.sendActionBar(player, plugin.healthUtil.replacePlaceholders(plugin.configStore.toggleMessage, "name", player.getName()));
                 }
                 continue;
             }
