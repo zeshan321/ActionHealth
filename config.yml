@@ -124,7 +124,7 @@ Name:
 # https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/
 Use Client Language: false
 
-# Allows bstats metrics
+# Allows bstats metrics. Useful to allow better understanding of version support and more metrics useful for maintaining
 Allow Metrics: true
 
 # If enabled, when a player gets into combat they will be tagged for the configurable amount of time.
