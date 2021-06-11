@@ -10,6 +10,7 @@ import com.zeshanaslam.actionhealth.utils.HealthUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.bstats.bukkit.Metrics;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class Main extends JavaPlugin {
     public boolean mythicMobsEnabled;
     public boolean langUtilsEnabled;
     public BukkitTask actionTask;
+    public Metrics metrics;
 
     public List<UUID> toggle = new ArrayList<>();
 

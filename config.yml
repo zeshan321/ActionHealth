@@ -124,6 +124,9 @@ Name:
 # https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/
 Use Client Language: false
 
+# Allows bstats metrics
+Allow Metrics: true
+
 # If enabled, when a player gets into combat they will be tagged for the configurable amount of time.
 # When the enemy triggers an action the provided message will be sent.
 # Supports all placeholders from above.

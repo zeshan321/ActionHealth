@@ -6,6 +6,7 @@ import com.zeshanaslam.actionhealth.action.ActionStore;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitTask;
+import org.bstats.bukkit.Metrics;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +56,7 @@ public class ConfigStore {
     public String upperLimit;
     public int upperLimitStart;
     public int upperLimitLength;
+    public boolean allowMetrics;
 
     public ConfigStore(Main plugin) {
         // Clear settings for reloads
@@ -209,6 +211,16 @@ public class ConfigStore {
             upperLimitLength = Integer.parseInt(limits[1]);
         } else {
             upperLimit = null;
+        }
+
+        if (plugin.getConfig().contains("Allow Metrics")) {
+            allowMetrics = plugin.getConfig().getBoolean("Allow Metrics");
+        } else {
+            allowMetrics = true;
+        }
+
+        if (allowMetrics && plugin.metrics == null) {
+            plugin.metrics = new Metrics(plugin, 11639);
         }
     }
 
