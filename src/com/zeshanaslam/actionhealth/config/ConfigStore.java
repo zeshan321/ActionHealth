@@ -3,10 +3,10 @@ package com.zeshanaslam.actionhealth.config;
 import com.zeshanaslam.actionhealth.LookThread;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.ActionStore;
+import com.zeshanaslam.actionhealth.utils.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitTask;
-import org.bstats.bukkit.Metrics;
 
 import java.util.ArrayList;
 import java.util.HashMap;

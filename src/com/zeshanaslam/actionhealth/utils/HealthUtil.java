@@ -268,7 +268,9 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.configStore.mcVersion.equals("v1_16_R1") || plugin.configStore.mcVersion.equals("v1_16_R2") || plugin.configStore.mcVersion.equals("v1_16_R3")) {
+            if (plugin.configStore.mcVersion.equals("v1_17_R1")) {
+                new NewAction(player, message);
+            } else if (plugin.configStore.mcVersion.equals("v1_16_R1") || plugin.configStore.mcVersion.equals("v1_16_R2") || plugin.configStore.mcVersion.equals("v1_16_R3")) {
                 new PreAction(player, message);
             } else if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_") || plugin.configStore.mcVersion.startsWith("v1_15_")) {
                 new LegacyPreAction(player, message);

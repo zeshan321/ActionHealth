@@ -7,10 +7,10 @@ import com.zeshanaslam.actionhealth.commands.HealthCommand;
 import com.zeshanaslam.actionhealth.config.ConfigStore;
 import com.zeshanaslam.actionhealth.events.HealthListeners;
 import com.zeshanaslam.actionhealth.utils.HealthUtil;
+import com.zeshanaslam.actionhealth.utils.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.bstats.bukkit.Metrics;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package org.bstats.bukkit;
+package com.zeshanaslam.actionhealth.utils;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
