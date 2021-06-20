@@ -7,27 +7,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class LookThread extends BukkitRunnable {
 
     private Main plugin;
-    private Set<Byte> transparentTypeIds;
     private TargetHelper targetHelper;
 
     public LookThread(Main plugin) {
         this.plugin = plugin;
         this.targetHelper = new TargetHelper(plugin);
-        this.transparentTypeIds = new TreeSet<>();
-
-        transparentTypeIds.add((byte) 0);
-        transparentTypeIds.add((byte) 20);
-        transparentTypeIds.add((byte) 95);
-        transparentTypeIds.add((byte) 102);
-        transparentTypeIds.add((byte) 160);
-        transparentTypeIds.add((byte) 8);
-        transparentTypeIds.add((byte) 9);
     }
 
     @Override
@@ -47,7 +35,7 @@ public class LookThread extends BukkitRunnable {
 
                     String name = plugin.healthUtil.getName(livingEntity, player);
 
-                    if (targetHelper.canSee(player, livingEntity.getLocation(), transparentTypeIds) && !plugin.healthUtil.isBlacklisted(livingEntity, name)) {
+                    if (targetHelper.canSee(player, livingEntity.getLocation()) && !plugin.healthUtil.isBlacklisted(livingEntity, name)) {
                         if (plugin.configStore.isUsingWhiteList()) {
                             if (!plugin.healthUtil.isWhiteListed(livingEntity, name)) {
                                 continue;
