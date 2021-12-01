@@ -42,10 +42,10 @@ dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT'
     compileOnly 'io.lumine.xikage:MythicMobs:4.9.1'
     compileOnly 'me.clip:placeholderapi:2.10.10'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    compileOnly 'org.apache.commons:commons-lang3:3.12.0'
+    compileOnly 'com.meowj:LangUtils:1.9'
+    compileOnly 'be.maximvdw:MVdWPlaceholderAPI:3.1.1'
     implementation 'org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'
-    implementation 'com.meowj:LangUtils:1.9'
-    implementation 'be.maximvdw:MVdWPlaceholderAPI:3.1.1'
 
 }
 
@@ -75,11 +75,9 @@ processResources {
 }
 
 shadowJar {
+    minimize()
     dependencies {
-        include(dependency('org.apache.commons:commons-lang3:3.12.0'))
         include(dependency('org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'))
-        include(dependency('com.meowj:LangUtils:1.9'))
-        include(dependency('be.maximvdw:MVdWPlaceholderAPI:3.1.1'))
     }
 }
 
