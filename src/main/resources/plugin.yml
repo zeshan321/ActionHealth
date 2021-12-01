@@ -1,0 +1,8 @@
+name: ActionHealth
+main: com.zeshanaslam.actionhealth.Main
+version: 3.5.6
+softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, WorldGuard, mcMMO, MythicMobs, LangUtils]
+api-version: 1.13
+commands:
+  Actionhealth:
+    description: Actionhealth main commands.

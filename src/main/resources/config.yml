@@ -1,0 +1,153 @@
+# The message the player is sent.
+# {name} shows the name of the mob or player.
+# {health} shows current health of the mob or player.
+# {maxhealth} shows the max health of the mob or player.
+# {usestyle} will use the defined chars.
+# {displayname} will use player/mob custom name.
+# {opponentlastdamage} the amount of damage the enemy last received.
+# {percenthealth} displays the percentage of health left.
+# Note: if placeholders are being overridden by other plugins you can add 'ah' in front of it i.e {ahhealth}
+#
+# For PlaceholderAPI or MVdWPlaceholderAPI:
+# By default placeholders will be retrieved as the attacking player.
+# Prefix with 'ATTACKEDPLAYER_' to get the placeholders as the attacked player
+# i.e %player_exp% would be %ATTACKEDPLAYER_player_exp%.
+Health Message: '&7&l{name}: {usestyle}'
+
+# If set empty it will default to the one above.
+# This message is sent to all non player entities.
+# All the placeholders from above work here also.
+Non Player Message: ''
+
+# The message the player is sent to the player if they have actionhealth disabled.
+# {name} shows the name of the player.
+Toggle Message: ''
+
+# Message sent to player when player enables actionhealth
+# {name} shows the name of the player.
+On Enable: '&7ActionHealth has been &cenabled&7.'
+
+# Message sent to player when player disables actionhealth
+# {name} shows the name of the player.
+On Disable: '&7ActionHealth has been &cdisabled&7.'
+
+# Strip Name.
+Strip Name: true
+
+# If enabled players with the permission 'ActionHealth.Health' will only see the action health message.
+Use Permissions: false
+
+# If set to false player will not see health messages from mobs.
+Show Mob: true
+
+# If set to false player will not see health messages from other players.
+Show Player: true
+
+# If set to false player will not see health messages from npcs.
+Show NPC: true
+
+# If set to true player will get the message in a delay to get 100% accurate health. Useful for plugins that add damage by reading item lore.
+Delay Message: false
+# Amount delayed by
+Delay Tick: 1
+
+# Style Health
+Full Health Icon: "&4\u2764"
+Half Health Icon: "&c\u2764"
+Empty Health Icon: "&7\u2764"
+
+# ActionHealth will be disabled for any world names added below. Case sensitive!
+Disabled worlds:
+  - randomworld
+
+Disabled regions:
+  - testing_region
+
+# Disable ActionHealth in regions where PvP is denied.
+Region PvP: true
+
+# Limits the health style to a certain amount of symbols. Static limit (-1 to disable)
+# Limit health WILL accurately still display the entities health.
+Limit Health: 10
+
+# If 'Limit Health' is set to -1. With 'Upper Limit Health' you can trigger 'Limit Health' logic to prevent 'Use Style' going off screen'
+# '40 -> 10' = If health over 40, use limit health 10. Leave empty to disable
+Upper Limit Health: "40 -> 10"
+
+# Saves players /actionhealth toggle state.
+# Uses flat file. If interested in SQL support ask in discussion.
+Remember Toggle: false
+
+# Blacklist by entity name or entity display name.
+# Also supports MythicMobs using the internal name.
+Blacklist:
+  - 'CCPD Officer'
+
+# Whitelist by entity name or entity display name.
+# Also supports MythicMobs using the internal name.
+Whitelist: []
+
+# Show the health of the entity that the player is looking at.
+Show On Look: true
+Look Distance: 10
+
+LookValues:
+  # How often (in ticks) to check if player is looking at an entity. Increase if lagging, maybe to 10 or 20.
+  CheckTicks: 0
+  # If the dot product is positive, the target is in front
+  Dot: 0
+  # Tolerance of the line calculation
+  Tolerance: 4
+
+# Check if player can see entity before sending health.
+Can See: true
+
+# Hide action health if entity has invisible potion on.
+Invisible Potion: true
+
+# Hide if entity is in spectator mode.
+Spectator Mode: true
+
+# If to show MiniaturePets health or not
+ShowMiniaturePets: true
+
+# Translate names. Case sensitive!
+# Check ActionHealth page if translations already exist for the language you plan on using.
+#
+# I'd appreciate if servers that use custom translations share them with me, so I can share them with others!
+# For users that do, I will tag them on Spigot and display their server IP.
+Name Change: false
+Name:
+  - Snow Golem = New name
+
+# Translate names using Client Language. Need to install LanguageUtils
+# https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/
+Use Client Language: false
+
+# Allows bstats metrics. Useful to allow better understanding of version support and more metrics useful for maintaining
+Allow Metrics: true
+
+# If enabled, when a player gets into combat they will be tagged for the configurable amount of time.
+# When the enemy triggers an action the provided message will be sent.
+# Supports all placeholders from above.
+# Supported events: CONSUME, RIGHTCLICK, LEFTCLICK, SWAP, DAMAGE
+Action:
+  Enabled: false
+  # In seconds
+  TagLength: 20
+  # Amount of entities a player can tag during combat. -1 for unlimited
+  TagAmount: 2
+  Events:
+    CONSUME:
+      GOLDEN_APPLE: '&7&l{name} consumed &cgolden apple&7&l!'
+      REGENERATION_POTION: '&7&l{name} consumed &cregen potion&7&l!'
+    RIGHTCLICK:
+      ENDER_PEARL: '&7&l{name} used &cender pearl&7&l!'
+    SWAP:
+      ENDER_PEARL: '&7&l{name} swapped to &cender pearls&7&l. {usestyle}&7&l'
+      POTION: '&7&l{name} swapped to &cpotion&7&l. {usestyle}&7&l'
+    DAMAGE:
+      ANY: '&7&l{name}: {usestyle}'
+      # Supports DamageCause if 'ANY' not being used
+      #LAVA: '&4On fire!'
+      #ENTITY_SWEEP_ATTACK: '&7You swept them!'
