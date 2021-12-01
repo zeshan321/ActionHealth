@@ -3,7 +3,7 @@ package com.zeshanaslam.actionhealth.utils;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.api.HealthSendEvent;
 import com.zeshanaslam.actionhealth.support.*;
-import org.apache.commons.lang.WordUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -268,13 +268,13 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.configStore.mcVersion.equals("v1_17_R1")) {
+            if (plugin.configStore.mcVersion.contains("v1_17") || plugin.configStore.mcVersion.contains("v1_18")) {
                 new NewAction(player, message);
-            } else if (plugin.configStore.mcVersion.equals("v1_16_R1") || plugin.configStore.mcVersion.equals("v1_16_R2") || plugin.configStore.mcVersion.equals("v1_16_R3")) {
+            } else if (plugin.configStore.mcVersion.contains("v1_16")) {
                 new PreAction(player, message);
             } else if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_") || plugin.configStore.mcVersion.startsWith("v1_15_")) {
                 new LegacyPreAction(player, message);
-            } else if (!(plugin.configStore.mcVersion.equalsIgnoreCase("v1_8_R1") || (plugin.configStore.mcVersion.contains("v1_7_")))) {
+            } else if (!(plugin.configStore.mcVersion.equalsIgnoreCase("v1_8_R1") || plugin.configStore.mcVersion.contains("v1_7_"))) {
                 Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.configStore.mcVersion + ".entity.CraftPlayer");
                 Object p = c1.cast(player);
                 Object ppoc;
