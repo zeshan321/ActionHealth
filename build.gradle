@@ -1,0 +1,84 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+group = 'com.zeshanaslam'
+version = '3.5.6'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        name = 'sonatype-repo'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    maven {
+        name = 'codemc-repo'
+        url = 'https://repo.codemc.org/repository/maven-public/'
+    }
+    maven {
+        name = 'langutils-repo'
+        url 'https://raw.github.com/MascusJeoraly/LanguageUtils/mvn-repo/'
+    }
+    maven {
+        name = 'Lumine Releases'
+        url 'https://mvn.lumine.io/repository/maven-public/'
+    }
+    maven {
+        name = 'papi-repo'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
+    maven {
+        name = 'IntellectualSites'
+        url = 'https://mvn.intellectualsites.com/content/repositories/releases/'
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT'
+    compileOnly 'io.lumine.xikage:MythicMobs:4.9.1'
+    compileOnly 'me.clip:placeholderapi:2.10.10'
+    compileOnly 'org.apache.commons:commons-lang3:3.12.0'
+    compileOnly 'com.meowj:LangUtils:1.9'
+    compileOnly 'be.maximvdw:MVdWPlaceholderAPI:3.1.1'
+    implementation 'org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'
+
+}
+
+def targetJavaVersion = 8
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release = targetJavaVersion
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+shadowJar {
+    minimize()
+    dependencies {
+        include(dependency('org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'))
+    }
+}
+
+tasks.build.dependsOn tasks.shadowJar
