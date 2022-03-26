@@ -32,7 +32,7 @@ Default config: [Click Here](https://github.com/zeshan321/ActionHealth/blob/mast
 A list of the community made translations: [Click Here](https://github.com/zeshan321/ActionHealth/wiki/Community-Translations)
 
 # Compiling
-To compile ActionHealth, you need at least **Java 8** and an internet connection. Then, clone this repo, run `./gradlew clean shadowJar` and get your jar from `build/libs/ActionHealh-VERSION-all.jar`.
+To compile ActionHealth, you need at least **Java 16** and an internet connection. Then, clone this repo, run `./gradlew clean shadowJar` and get your jar from `build/libs/ActionHealh-VERSION-all.jar`.
 
 # More info
 Custom styles, screenshots, command information and more can be found on the spigot page.
