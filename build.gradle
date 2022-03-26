@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.zeshanaslam'
-version = '3.5.6'
+version = '3.5.7'
 
 repositories {
     mavenCentral()
@@ -22,11 +22,11 @@ repositories {
     }
     maven {
         name = 'langutils-repo'
-        url 'https://raw.github.com/MascusJeoraly/LanguageUtils/mvn-repo/'
+        url = 'https://raw.github.com/MascusJeoraly/LanguageUtils/mvn-repo/'
     }
     maven {
         name = 'Lumine Releases'
-        url 'https://mvn.lumine.io/repository/maven-public/'
+        url = 'https://mvn.lumine.io/repository/maven-public/'
     }
     maven {
         name = 'papi-repo'
@@ -40,16 +40,15 @@ repositories {
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT'
-    compileOnly 'io.lumine.xikage:MythicMobs:4.9.1'
     compileOnly 'me.clip:placeholderapi:2.10.10'
     compileOnly 'org.apache.commons:commons-lang3:3.12.0'
     compileOnly 'com.meowj:LangUtils:1.9'
-    compileOnly 'be.maximvdw:MVdWPlaceholderAPI:3.1.1'
+    compileOnly files('temp_libs/MVdWPlaceholderAPI.jar')
+    compileOnly files('temp_libs/MythicMobs-5.0.2.jar')
     implementation 'org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'
-
 }
 
-def targetJavaVersion = 8
+def targetJavaVersion = 16
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion
