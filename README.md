@@ -5,7 +5,10 @@ Spigot page: [Click Here](https://www.spigotmc.org/resources/action-bar-health.2
 
 # Dependencies
 **Required**
-- Java 8 or greater
+- Version v3.5.7 or greater
+  - Java 16 or greater
+- Versions below v3.5.7
+  - Java 8 or greater
 
 **Optional**
 - For region disable option:
