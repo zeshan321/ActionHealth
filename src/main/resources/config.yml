@@ -108,8 +108,11 @@ Invisible Potion: true
 # Hide if entity is in spectator mode.
 Spectator Mode: true
 
-# If to show MiniaturePets health or not
+# If true show MiniaturePets health or not
 ShowMiniaturePets: true
+
+# If true show Armor Stand health or not
+ShowArmorStand: true
 
 # Translate names. Case sensitive!
 # Check ActionHealth page if translations already exist for the language you plan on using.
