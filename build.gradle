@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.zeshanaslam'
-version = '3.5.8'
+version = '3.5.9'
 
 repositories {
     mavenCentral()

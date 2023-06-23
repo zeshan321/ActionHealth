@@ -268,7 +268,7 @@ public class HealthUtil {
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         try {
-            if (plugin.configStore.mcVersion.contains("v1_17") || plugin.configStore.mcVersion.contains("v1_18") || plugin.configStore.mcVersion.contains("v1_19")) {
+            if (plugin.configStore.mcVersion.contains("v1_17") || plugin.configStore.mcVersion.contains("v1_18") || plugin.configStore.mcVersion.contains("v1_19") || plugin.configStore.mcVersion.contains("v1_20")) {
                 new NewAction(player, message);
             } else if (plugin.configStore.mcVersion.contains("v1_16")) {
                 new PreAction(player, message);
