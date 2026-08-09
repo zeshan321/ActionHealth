@@ -42,7 +42,7 @@ public class LookThread extends BukkitRunnable {
                             }
                         }
 
-                        plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth());
+                        plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() + livingEntity.getAbsorptionAmount());
                         break;
                     }
                 }

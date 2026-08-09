@@ -54,7 +54,7 @@ public class HealthListeners implements Listener {
                 LivingEntity livingEntity = (LivingEntity) damaged;
 
                 livingEntity.setLastDamage(event.getFinalDamage());
-                plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
+                plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage() + livingEntity.getAbsorptionAmount());
             }
         }
     }
