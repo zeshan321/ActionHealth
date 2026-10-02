@@ -3,12 +3,14 @@ ActionHealth is a Minecraft plugin that utilizes the action bar to display entit
 
 Spigot page: [Click Here](https://www.spigotmc.org/resources/action-bar-health.2661/)
 
+# Supported versions
+One jar runs on every Spigot version from 1.8 to the current release (26.3 at the time of writing), on any Java version the server uses (Java 8 or greater). Forks of Spigot, such as Paper, work too.
+
+ActionHealth does not check the server version. It detects which API is available, so new Minecraft versions do not need a new ActionHealth release. See [compat/README.md](compat/README.md) for how this is tested.
+
 # Dependencies
 **Required**
-- Version v3.5.7 or greater
-  - Java 16 or greater
-- Versions below v3.5.7
-  - Java 8 or greater
+- Nothing besides Spigot (or a fork) 1.8 or greater
 
 **Optional**
 - For region disable option:
@@ -32,7 +34,7 @@ Default config: [Click Here](https://github.com/zeshan321/ActionHealth/blob/mast
 A list of the community made translations: [Click Here](https://github.com/zeshan321/ActionHealth/wiki/Community-Translations)
 
 # Compiling
-To compile ActionHealth, you need at least **Java 16** and an internet connection. Then, clone this repo, run `./gradlew clean shadowJar` and get your jar from `build/libs/ActionHealh-VERSION-all.jar`.
+To compile ActionHealth, you need **JDK 17** or newer and an internet connection. Then, clone this repo, run `./gradlew clean build` and get your jar from `build/libs/ActionHealth-VERSION-all.jar`. The jar targets Java 8, so it runs on every server.
 
 # More info
 Custom styles, screenshots, command information and more can be found on the spigot page.

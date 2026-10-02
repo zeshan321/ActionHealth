@@ -3,7 +3,6 @@ package com.zeshanaslam.actionhealth.utils;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.api.HealthSendEvent;
 import com.zeshanaslam.actionhealth.support.*;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -16,7 +15,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.codemc.worldguardwrapper.WorldGuardWrapper;
 import org.codemc.worldguardwrapper.region.IWrappedRegion;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -25,9 +23,12 @@ import java.util.UUID;
 public class HealthUtil {
 
     private Main plugin;
+    private final ActionBar actionBar;
+    private final PlaceholderSupport placeholderSupport = new PlaceholderSupport();
 
     public HealthUtil(Main plugin) {
         this.plugin = plugin;
+        this.actionBar = new ActionBar(plugin.getLogger());
     }
 
     public void sendHealth(Player receiver, LivingEntity entity, double health) {
@@ -79,7 +80,7 @@ public class HealthUtil {
     }
 
     public String getOutput(double health, String output, Player receiver, LivingEntity entity) {
-        double maxHealth = entity.getMaxHealth();
+        double maxHealth = Compat.getMaxHealth(entity);
 
         if (health < 0.0 || entity.isDead()) health = 0.0;
 
@@ -107,12 +108,12 @@ public class HealthUtil {
             // Set placeholders as attacker
             if (plugin.configStore.hasMVdWPlaceholderAPI) {
                 output = replacePlaceholders(output, "ATTACKEDPLAYER_", "");
-                output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(player, output);
+                output = placeholderSupport.setMVdWPlaceholderAPI(player, output);
             }
 
             if (plugin.configStore.hasPlaceholderAPI) {
                 output = replacePlaceholders(output, "ATTACKEDPLAYER_", "");
-                output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, output);
+                output = placeholderSupport.setPlaceholderAPI(player, output);
             }
         } else {
             if (!plugin.configStore.healthMessageOther.isEmpty()) {
@@ -124,11 +125,11 @@ public class HealthUtil {
 
         // Set placeholders as receiver
         if (plugin.configStore.hasMVdWPlaceholderAPI) {
-            output = be.maximvdw.placeholderapi.PlaceholderAPI.replacePlaceholders(receiver, output);
+            output = placeholderSupport.setMVdWPlaceholderAPI(receiver, output);
         }
 
         if (plugin.configStore.hasPlaceholderAPI) {
-            output = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(receiver, output);
+            output = placeholderSupport.setPlaceholderAPI(receiver, output);
         }
 
         output = replacePlaceholders(output, "name", name);
@@ -218,6 +219,7 @@ public class HealthUtil {
                 name = entity.getCustomName();
             } else if (plugin.langUtilsEnabled && plugin.configStore.useClientLanguage && receiver != null) {
                 name = new LangUtilsSupport().getName(entity, receiver);
+                if (name == null) name = getNameReflection(entity);
             } else {
                 name = getNameReflection(entity);
             }
@@ -260,65 +262,18 @@ public class HealthUtil {
     }
 
     private String capitalizeFully(String words) {
-        words = words.toLowerCase();
-        return WordUtils.capitalizeFully(words);
+        StringBuilder builder = new StringBuilder(words.length());
+        boolean capitalizeNext = true;
+        for (char c : words.toLowerCase().toCharArray()) {
+            builder.append(capitalizeNext ? Character.toTitleCase(c) : c);
+            capitalizeNext = Character.isWhitespace(c);
+        }
+
+        return builder.toString();
     }
 
     public void sendActionBar(Player player, String message) {
-        message = ChatColor.translateAlternateColorCodes('&', message);
-
-        try {
-            if (plugin.configStore.mcVersion.contains("v1_17") || plugin.configStore.mcVersion.contains("v1_18") || plugin.configStore.mcVersion.contains("v1_19") || plugin.configStore.mcVersion.contains("v1_20")) {
-                new NewAction(player, message);
-            } else if (plugin.configStore.mcVersion.contains("v1_16")) {
-                new PreAction(player, message);
-            } else if (plugin.configStore.mcVersion.equals("v1_12_R1") || plugin.configStore.mcVersion.startsWith("v1_13") || plugin.configStore.mcVersion.startsWith("v1_14_") || plugin.configStore.mcVersion.startsWith("v1_15_")) {
-                new LegacyPreAction(player, message);
-            } else if (!(plugin.configStore.mcVersion.equalsIgnoreCase("v1_8_R1") || plugin.configStore.mcVersion.contains("v1_7_"))) {
-                Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.configStore.mcVersion + ".entity.CraftPlayer");
-                Object p = c1.cast(player);
-                Object ppoc;
-                Class<?> c4 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".PacketPlayOutChat");
-                Class<?> c5 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".Packet");
-
-                Class<?> c2 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".ChatComponentText");
-                Class<?> c3 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".IChatBaseComponent");
-                Object o = c2.getConstructor(new Class<?>[]{String.class}).newInstance(message);
-                ppoc = c4.getConstructor(new Class<?>[]{c3, byte.class}).newInstance(o, (byte) 2);
-
-                Method getHandle = c1.getDeclaredMethod("getHandle");
-                Object handle = getHandle.invoke(p);
-
-                Field fieldConnection = handle.getClass().getDeclaredField("playerConnection");
-                Object playerConnection = fieldConnection.get(handle);
-
-                Method sendPacket = playerConnection.getClass().getDeclaredMethod("sendPacket", c5);
-                sendPacket.invoke(playerConnection, ppoc);
-            } else {
-                Class<?> c1 = Class.forName("org.bukkit.craftbukkit." + plugin.configStore.mcVersion + ".entity.CraftPlayer");
-                Object p = c1.cast(player);
-                Object ppoc;
-                Class<?> c4 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".PacketPlayOutChat");
-                Class<?> c5 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".Packet");
-
-                Class<?> c2 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".ChatSerializer");
-                Class<?> c3 = Class.forName("net.minecraft.server." + plugin.configStore.mcVersion + ".IChatBaseComponent");
-                Method m3 = c2.getDeclaredMethod("a", String.class);
-                Object cbc = c3.cast(m3.invoke(c2, "{\"text\": \"" + message + "\"}"));
-                ppoc = c4.getConstructor(new Class<?>[]{c3, byte.class}).newInstance(cbc, (byte) 2);
-
-                Method getHandle = c1.getDeclaredMethod("getHandle");
-                Object handle = getHandle.invoke(p);
-
-                Field fieldConnection = handle.getClass().getDeclaredField("playerConnection");
-                Object playerConnection = fieldConnection.get(handle);
-
-                Method sendPacket = playerConnection.getClass().getDeclaredMethod("sendPacket", c5);
-                sendPacket.invoke(playerConnection, ppoc);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        actionBar.send(player, ChatColor.translateAlternateColorCodes('&', message));
     }
 
     public boolean isDisabled(Location location) {
