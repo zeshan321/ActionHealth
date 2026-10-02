@@ -75,6 +75,8 @@ public class ActionStore {
             for (Tagged tagged : taggedList) {
                 if (tagged.damaged.equals(entity.getUniqueId())) {
                     Player damager = Bukkit.getServer().getPlayer(tagged.damager);
+                    if (damager == null)
+                        continue;
 
                     String output = main.healthUtil.getOutput(health.orElseGet(entity::getHealth), message, damager, entity);
 

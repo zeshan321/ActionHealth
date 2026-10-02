@@ -35,8 +35,6 @@ public class ConfigStore {
     public List<String> worlds = new ArrayList<>();
     public HashMap<String, String> translate = new HashMap<>();
     public List<String> regions = new ArrayList<>();
-    public String mcVersion;
-    public boolean useOldMethods;
     public boolean showOnLook;
     public double lookDistance;
     public List<String> blacklist = new ArrayList<>();
@@ -108,12 +106,6 @@ public class ConfigStore {
         regions = plugin.getConfig().getStringList("Disabled regions");
 
         worlds = plugin.getConfig().getStringList("Disabled worlds");
-
-        // Check if using protocol build
-        mcVersion = Bukkit.getServer().getClass().getPackage().getName();
-        mcVersion = mcVersion.substring(mcVersion.lastIndexOf(".") + 1);
-
-        useOldMethods = mcVersion.equalsIgnoreCase("v1_8_R1") || mcVersion.equalsIgnoreCase("v1_7_");
 
         if (plugin.getConfig().contains("Remember Toggle")) {
             rememberToggle = plugin.getConfig().getBoolean("Remember Toggle");

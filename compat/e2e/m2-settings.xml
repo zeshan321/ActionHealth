@@ -1,0 +1,10 @@
+<settings>
+  <mirrors>
+    <!-- oss.sonatype.org is shut down. PaperMC mirrors the old bungeecord-chat snapshots. -->
+    <mirror>
+      <id>sonatype-mirror</id>
+      <mirrorOf>sonatype-nexus-snapshots,sonatype-snapshots,sonatype</mirrorOf>
+      <url>https://repo.papermc.io/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+</settings>

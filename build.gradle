@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id "com.github.johnrengelman.shadow" version "7.1.0"
+    id 'com.gradleup.shadow' version '8.3.8'
 }
 
 group = 'com.zeshanaslam'
-version = '3.5.9'
+version = '3.6.0'
 
 repositories {
     mavenCentral()
@@ -13,55 +13,30 @@ repositories {
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
     }
     maven {
-        name = 'sonatype-repo'
-        url = 'https://oss.sonatype.org/content/repositories/snapshots/'
-    }
-    maven {
         name = 'codemc-repo'
         url = 'https://repo.codemc.org/repository/maven-public/'
-    }
-    maven {
-        name = 'langutils-repo'
-        url = 'https://raw.github.com/MascusJeoraly/LanguageUtils/mvn-repo/'
-    }
-    maven {
-        name = 'Lumine Releases'
-        url = 'https://mvn.lumine.io/repository/maven-public/'
-    }
-    maven {
-        name = 'papi-repo'
-        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
-    }
-    maven {
-        name = 'IntellectualSites'
-        url = 'https://mvn.intellectualsites.com/content/repositories/releases/'
     }
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT'
-    compileOnly 'me.clip:placeholderapi:2.10.10'
-    compileOnly 'org.apache.commons:commons-lang3:3.12.0'
-    compileOnly 'com.meowj:LangUtils:1.9'
-    compileOnly files('temp_libs/MVdWPlaceholderAPI.jar')
-    compileOnly files('temp_libs/MythicMobs-5.0.2.jar')
-    implementation 'org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'
+    // Compile against the oldest supported API (1.8.8). Anything newer must go through
+    // feature detection, so one jar runs on every Spigot version from 1.8 to current.
+    // Optional plugins (PlaceholderAPI, MVdWPlaceholderAPI, MythicMobs, LangUtils) are
+    // reached through reflection and need no compile dependency.
+    compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+    implementation 'org.codemc.worldguardwrapper:worldguardwrapper:1.2.1-SNAPSHOT'
 }
 
-def targetJavaVersion = 16
+// Java 8 bytecode runs on every Java version a Spigot server can use (8 to 25+).
 java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks.withType(JavaCompile).configureEach {
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release = targetJavaVersion
-    }
+    options.encoding = 'UTF-8'
+    options.release = 8
+    options.compilerArgs << '-Xlint:-options'
 }
 
 processResources {
@@ -75,9 +50,7 @@ processResources {
 
 shadowJar {
     minimize()
-    dependencies {
-        include(dependency('org.codemc.worldguardwrapper:worldguardwrapper:1.2.0-SNAPSHOT'))
-    }
+    relocate 'org.codemc.worldguardwrapper', 'com.zeshanaslam.actionhealth.libs.worldguardwrapper'
 }
 
 tasks.build.dependsOn tasks.shadowJar

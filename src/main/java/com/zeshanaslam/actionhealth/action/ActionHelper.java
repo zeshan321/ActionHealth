@@ -2,6 +2,7 @@ package com.zeshanaslam.actionhealth.action;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.data.Action;
+import com.zeshanaslam.actionhealth.utils.Compat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -9,8 +10,8 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.ArrayList;
@@ -70,20 +71,20 @@ public class ActionHelper {
         String name = itemStack.getType().name();
         possibleMaterials.add(name);
 
-        if (itemStack.hasItemMeta()) {
-            ItemMeta itemMeta = itemStack.getItemMeta();
-            if (itemMeta instanceof PotionMeta) {
-                PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
+        // Not guarded by hasItemMeta(): 1.8 stores the potion type in the durability, so a plain
+        // potion has no item meta there, but getItemMeta() still returns a PotionMeta.
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (itemMeta instanceof PotionMeta) {
+            PotionMeta potionMeta = (PotionMeta) itemMeta;
 
-                PotionData potionData = potionMeta.getBasePotionData();
-                if (potionData.getType().getEffectType() != null) {
-                    possibleMaterials.add(potionData.getType().getEffectType().getName() + "_" + name);
-                }
+            PotionEffectType baseEffect = Compat.getBasePotionEffect(potionMeta, itemStack);
+            if (baseEffect != null) {
+                possibleMaterials.add(Compat.getEffectName(baseEffect) + "_" + name);
+            }
 
-                if (potionMeta.hasCustomEffects()) {
-                    for (PotionEffect potionEffect : potionMeta.getCustomEffects()) {
-                        possibleMaterials.add(potionEffect.getType().getName() + "_" + name);
-                    }
+            if (potionMeta.hasCustomEffects()) {
+                for (PotionEffect potionEffect : potionMeta.getCustomEffects()) {
+                    possibleMaterials.add(Compat.getEffectName(potionEffect.getType()) + "_" + name);
                 }
             }
         }
