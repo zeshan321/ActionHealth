@@ -244,13 +244,14 @@ public class HealthUtil {
         Method getName = null;
         try {
             if (entity.getCustomName() == null)
-                getName = entity.getClass().getMethod("getName", (Class<?>[]) null);
+                // No null parameter array: Paper's reflection remapper throws on it (1.20.5 to early 1.21).
+                getName = entity.getClass().getMethod("getName");
         } catch (NoSuchMethodException | SecurityException ignored) {
         }
 
         if (getName != null) {
             try {
-                name = (String) getName.invoke(entity, (Object[]) null);
+                name = (String) getName.invoke(entity);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 name = capitalizeFully(entity.getType().name().replace("_", ""));
             }
@@ -273,6 +274,10 @@ public class HealthUtil {
     }
 
     public void sendActionBar(Player player, String message) {
+        // NPC players (for example Citizens) have no client to show the message.
+        if (player.hasMetadata("NPC"))
+            return;
+
         actionBar.send(player, ChatColor.translateAlternateColorCodes('&', message));
     }
 

@@ -313,6 +313,11 @@ public class TargetHelper {
     }
 
     public boolean canSee(LivingEntity from, Location to) {
-        return getTarget(from.getEyeLocation(), (int) Math.ceil(from.getLocation().distance(to))) == null;
+        try {
+            return getTarget(from.getEyeLocation(), (int) Math.ceil(from.getLocation().distance(to))) == null;
+        } catch (IllegalStateException e) {
+            // BlockIterator throws "Start block missed" when the eye is outside the world, for example in the void.
+            return false;
+        }
     }
 }

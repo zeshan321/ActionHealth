@@ -41,22 +41,25 @@ compat/e2e/integrations.sh   # WorldGuard and PlaceholderAPI
 | consume | Action system: Bot1 tags Bot2, Bot2 drinks a regeneration potion, Bot1 gets `Bot2 consumed regen potion!`. The potion name comes from a different API on 1.8, 1.9 to 1.20.1 and 1.20.2+. |
 | log | The server log has no ActionHealth errors or warnings. |
 
-`matrix.txt` has 26 Spigot versions: the last release of every minor version from 1.8 to 1.21, 26.1.2 and 26.3. It also has every NMS revision of 1.8 and 1.9 (the only versions that use NMS), plus extra releases around API changes (1.13, 1.16.1, 1.16.3, 1.20.1, 1.20.4, 1.21.1, 1.21.4). It covers Java 8, 17, 21 and 25. Mineflayer does not support 26.2+ yet, so 26.3 runs with ViaVersion and ViaBackwards and a 26.1 client.
+`matrix.txt` has 27 Spigot versions: the last release of every minor version from 1.8 to 1.21, plus 26.1.2, 26.2 and 26.3. It also has every NMS revision of 1.8 and 1.9 (the only versions that use NMS), plus extra releases around API changes (1.13, 1.16.1, 1.16.3, 1.20.1, 1.20.4, 1.21.1, 1.21.4). It covers Java 8, 17, 21 and 25. Mineflayer does not support 26.2+ yet, so 26.2 and 26.3 run with ViaVersion and ViaBackwards and a 26.1 client.
 
 `integrations.sh` runs:
 
 - The WorldGuard region check on one server per WorldGuardWrapper implementation: WorldGuard 6.1 on 1.8.8, 6.2.2 on 1.12.2, 7.0.15 on 1.21.11 and 7.0.19 on 26.3. Inside `testing_region` (a default "Disabled regions" entry) there is no action bar. Outside it, the action bar works.
 - The PlaceholderAPI check on 1.8.8 and 26.3: `%player_name%` in the health message shows the player name.
+- The main test on Paper 1.8.8, 1.20.6, 1.21.11 and 26.3. Paper changes how plugin reflection works on 1.20.5+, so Paper needs its own check.
 
 To test a new Minecraft version, add a line to `matrix.txt` and run `matrix.sh`. The scripts also take a Paper jar: `run.sh <paper.jar> <version> <java> <plugin.jar>`.
 
 ### Results
 
-| Server | 3.5.9 (before) | 3.6.0 |
+| Server | 3.5.9 | 3.6.1 |
 | --- | --- | --- |
 | Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass |
 | Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass |
-| Spigot 1.21.1 to 26.3 (5 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass |
+| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass |
+| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass |
 | WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass |
 | PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass |
-| Paper 1.8.8, 1.21.11 and 26.3 | Not run | Pass |
+
+3.6.0 failed on Paper 1.20.6. Paper's reflection remapper threw on `getMethod("getName", (Class<?>[]) null)`. 3.6.1 fixes this, and the Paper check is now part of `integrations.sh`.
