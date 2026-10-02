@@ -3,6 +3,8 @@
 #   - WorldGuard region test on one server per WorldGuardWrapper implementation:
 #     WorldGuard 6.1 (legacy), 6.2 (v6) and 7 (v7).
 #   - PlaceholderAPI test on the oldest and newest versions.
+#   - The main test on Paper 1.8.8, 1.20.6, 1.21.11 and 26.3. Paper rewrites plugin
+#     reflection on 1.20.5+, which once broke a getMethod call that Spigot accepts.
 #
 #   integrations.sh [plugin.jar]
 set -uo pipefail
@@ -52,4 +54,33 @@ done
 PAPI=$(fetch "$MODRINTH/lKEzGugV/versions/pIvQcXW8/PlaceholderAPI-2.12.3.jar")
 check placeholderapi 1.8.8 8 1.8.8 "$(basename "$PAPI")" "$PAPI"
 check placeholderapi 26.3 25 26.1 "$(basename "$PAPI")" "$PAPI" "$VIA_DIR/ViaVersion-5.12.0.jar" "$VIA_DIR/ViaBackwards-5.12.0.jar"
+
+# Latest Paper build of a version, from the PaperMC download API.
+paper() {
+  local jar="$CACHE/paper-$1.jar"
+  if [ ! -f "$jar" ]; then
+    local url
+    url=$(curl -sf "https://fill.papermc.io/v3/projects/paper/versions/$1/builds/latest" \
+      | grep -oE '"url":"[^"]+"' | head -n 1 | sed 's/"url":"//; s/"$//')
+    curl -sfL -o "$jar" "$url"
+  fi
+  echo "$jar"
+}
+
+check_paper() {
+  local mc=$1 java=$2 client=$3
+  shift 3
+  local log="$DIR/runs/paper-$mc.log"
+  if "$DIR/run.sh" "$(paper "$mc")" "$mc" "$java" "$PLUGIN" "$client" "$@" > "$log" 2>&1; then
+    echo "PASS  Paper $mc $(grep -oE '^(PASS|FAIL) [a-z-]+' "$log" | tr '\n' ' ')"
+  else
+    failed=1
+    echo "FAIL  Paper $mc $(grep -oE '^(PASS|FAIL) [a-z-]+' "$log" | tr '\n' ' ') see $log"
+  fi
+}
+
+check_paper 1.8.8 8 1.8.8
+check_paper 1.20.6 21 1.20.6
+check_paper 1.21.11 21 1.21.11
+check_paper 26.3 25 26.1 "$VIA_DIR/ViaVersion-5.12.0.jar" "$VIA_DIR/ViaBackwards-5.12.0.jar"
 exit $failed
