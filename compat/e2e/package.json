@@ -1,0 +1,8 @@
+{
+  "name": "actionhealth-e2e",
+  "private": true,
+  "description": "Joins a real server with bots and checks the ActionHealth action bar.",
+  "dependencies": {
+    "mineflayer": "4.39.0"
+  }
+}

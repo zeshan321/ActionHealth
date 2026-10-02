@@ -116,3 +116,7 @@ run/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+# Compatibility tests: downloads, server runs, bot dependencies
+compat/.cache/
+compat/e2e/runs/
+node_modules/
