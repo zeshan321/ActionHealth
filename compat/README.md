@@ -89,18 +89,20 @@ To test a new Minecraft version, add a line to `matrix.txt` and run `matrix.sh`.
 
 ### Results
 
-| Server | 3.5.9 | 3.8.0 | 3.8.1 |
-| --- | --- | --- | --- |
-| Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass | Pass |
-| Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass | Pass |
-| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass | Pass |
-| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass | Pass |
-| Paper 1.16.5 and 1.21.11 with the Adventure method | Not run | Not run (no Adventure method) | Pass |
-| Folia 1.21.11 and 26.2 | Not run | Pass. Folia does not load 3.7.1 and older, because their plugin.yml does not have `folia-supported: true` | Pass |
-| WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass | Pass, without WorldGuardWrapper |
-| PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass | Pass |
-| ModelEngine R3.1.11 on 1.20.4 | Not run | Pass. 3.7.0 failed the two checks that look up at the body | Pass |
+| Server | 3.5.9 | 3.8.0 | 3.8.1 | 3.9.0 |
+| --- | --- | --- | --- | --- |
+| Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass | Pass | Pass |
+| Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass | Pass | Pass |
+| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass | Pass | Pass. 26.3 failed 1 of 3 runs, see below |
+| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass | Pass | Pass |
+| Paper 1.16.5 and 1.21.11 with the Adventure method | Not run | Not run (no Adventure method) | Pass | Pass |
+| Folia 1.21.11 and 26.2 | Not run | Pass. Folia does not load 3.7.1 and older, because their plugin.yml does not have `folia-supported: true` | Pass | Pass |
+| WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass | Pass, without WorldGuardWrapper | Pass |
+| PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass | Pass | Pass |
+| ModelEngine R3.1.11 on 1.20.4 | Not run | Pass. 3.7.0 failed the two checks that look up at the body | Pass | Pass |
 
 On Spigot 1.21.11, 3.8.0 fails the new checks method, toggle-message, action-damage and action-tags. 3.8.1 passes them.
+
+3.9.0 adds the checks health-color, decimals, update-check, reload-message and default-off. In the full run, Spigot 26.3 failed consume and action-tags once: Bot2 drank the potion, but Bot1 got no message. Two more runs on 26.3 passed, and 3.9.0 does not change the action code. The cause is not known yet.
 
 3.6.0 failed on Paper 1.20.6. Paper's reflection remapper threw on `getMethod("getName", (Class<?>[]) null)`. 3.6.1 fixes this, and the Paper check is now part of `integrations.sh`.

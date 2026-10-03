@@ -10,7 +10,7 @@ A Minecraft plugin that shows the health of players and mobs in the action bar, 
 
 One jar runs on Spigot 1.8 to 26.3, and on forks such as Paper and Folia. It runs on Java 8 or newer, so use the Java version that your server already runs.
 
-ActionHealth does not check the server version. It checks which features the server has. New Minecraft versions should not need an update. Version 3.8.1 was tested on 27 Spigot versions, 5 Paper versions and 2 Folia versions, with bots that read the action bar. [How the tests work](compat/README.md).
+ActionHealth does not check the server version. It checks which features the server has. New Minecraft versions should not need an update. Version 3.9.0 was tested on 27 Spigot versions, 5 Paper versions and 2 Folia versions, with bots that read the action bar. [How the tests work](compat/README.md).
 
 ## Features
 
