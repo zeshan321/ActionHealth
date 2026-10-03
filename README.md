@@ -8,9 +8,9 @@ A Minecraft plugin that shows the health of players and mobs in the action bar, 
 
 ## Supported versions
 
-One jar runs on Spigot 1.8 to 26.3, and on forks such as Paper. It runs on Java 8 or newer, so use the Java version that your server already runs.
+One jar runs on Spigot 1.8 to 26.3, and on forks such as Paper and Folia. It runs on Java 8 or newer, so use the Java version that your server already runs.
 
-ActionHealth does not check the server version. It checks which features the server has. New Minecraft versions should not need an update. Version 3.7.1 was tested on 27 Spigot versions, with bots that read the action bar. [How the tests work](compat/README.md).
+ActionHealth does not check the server version. It checks which features the server has. New Minecraft versions should not need an update. Version 3.8.0 was tested on 27 Spigot versions, 4 Paper versions and 2 Folia versions, with bots that read the action bar. [How the tests work](compat/README.md).
 
 ## Features
 
@@ -22,6 +22,7 @@ ActionHealth does not check the server version. It checks which features the ser
 - **Toggle.** Players can turn ActionHealth off for themselves. The choice can stay after they log out.
 - **Filters.** Turn ActionHealth off in worlds or WorldGuard regions, or for players, mobs, NPCs, invisible entities and spectators. Use a blacklist or a whitelist of names.
 - **Translations.** Rename mobs in the config, or show mob names in each player's client language.
+- **Config updates.** When an update adds options, ActionHealth adds them to the end of your `config.yml`, with their comments. The rest of the file stays the same.
 
 ## Install
 
@@ -34,9 +35,11 @@ ActionHealth does not check the server version. It checks which features the ser
 
 | Command or permission | What it does |
 | --- | --- |
-| `/actionhealth reload` | Reloads the config. Needs `ActionHealth.Reload`. |
-| `/actionhealth toggle` | Turns the health display on or off for you. |
+| `/actionhealth reload` | Reloads the config. Needs `ActionHealth.Reload`, which operators have by default. |
+| `/actionhealth toggle` | Turns the health display on or off for you. Needs `ActionHealth.Toggle`, which all players have by default. |
 | `ActionHealth.Health` | Lets a player see health messages. Applies only when `Use Permissions` is `true`. |
+
+The command has tab completion.
 
 ## Placeholders
 
@@ -81,7 +84,7 @@ You need JDK 17 or newer.
 ./gradlew clean build
 ```
 
-The jar is `build/libs/ActionHealth-<version>-all.jar`. It targets Java 8, so it runs on every server. To test a change on real servers, see [compat/README.md](compat/README.md).
+The build also runs the unit tests. The jar is `build/libs/ActionHealth-<version>-all.jar`. It targets Java 8, so it runs on every server. To test a change on real servers, see [compat/README.md](compat/README.md).
 
 ## License
 

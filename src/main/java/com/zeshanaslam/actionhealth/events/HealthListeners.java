@@ -1,7 +1,6 @@
 package com.zeshanaslam.actionhealth.events;
 
 import com.zeshanaslam.actionhealth.Main;
-import com.zeshanaslam.actionhealth.utils.FileHandler;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -10,7 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public class HealthListeners implements Listener {
@@ -53,22 +52,19 @@ public class HealthListeners implements Listener {
             if (damaged instanceof LivingEntity) {
                 LivingEntity livingEntity = (LivingEntity) damaged;
 
-                livingEntity.setLastDamage(event.getFinalDamage());
+                // Set here too, because the order of MONITOR listeners for one event is not fixed.
+                plugin.healthUtil.setLastDamage(livingEntity, event.getFinalDamage());
                 plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth() - event.getFinalDamage());
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-
-        if (plugin.configStore.rememberToggle) {
-            FileHandler fileHandler = new FileHandler("plugins/ActionHealth/players/" + player.getUniqueId() + ".yml");
-
-            if (fileHandler.getBoolean("toggle")) {
-                plugin.toggle.add(player.getUniqueId());
-            }
+    // Keeps the damage for {opponentlastdamage}. The plugin does not write it to the entity, because
+    // the server uses the last damage of an entity to calculate the damage of the next hit.
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onAnyDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof LivingEntity) {
+            plugin.healthUtil.setLastDamage((LivingEntity) event.getEntity(), event.getFinalDamage());
         }
     }
 
@@ -76,7 +72,9 @@ public class HealthListeners implements Listener {
     public void onLeave(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 
-        plugin.toggle.remove(player.getUniqueId());
-        plugin.healthUtil.cancelClear(player.getUniqueId());
+        if (!plugin.configStore.rememberToggle) {
+            plugin.toggles.forget(player.getUniqueId());
+        }
+        plugin.healthUtil.forget(player.getUniqueId());
     }
 }

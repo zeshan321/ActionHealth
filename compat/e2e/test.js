@@ -6,10 +6,15 @@
 //   look    - Bot1 looks at a cow and gets "Cow: 10/10 ..." ("Show On Look").
 //   hex     - The message color &#4fdfc4 arrives as that hex color (1.16+) or as aqua, the closest legacy color.
 //   absorption - The cow gets 8 absorption health. The bar shows "+8" and 8 absorption icons after the 10 health icons.
+//   config-update - run.sh removes "Display Time" from the config. The plugin adds it back at the end
+//                   of the file, with its comment, and keeps the rest of the file.
 //   damage  - "Show On Look" off and /actionhealth reload, then Bot1 hits the cow and gets "Cow: <10/10".
+//   last-damage - The same message shows the damage of the hit with {opponentlastdamage}.
+//   permission - Bot1 is not an operator. /actionhealth reload shows the no permission message.
 //   toggle  - /actionhealth toggle stops the messages.
 //   consume - Action system: Bot1 tags Bot2, Bot2 drinks a regeneration potion, Bot1 gets the CONSUME message.
 //   display-time - With "Display Time: 10", the bar is cleared about 10 ticks after Bot1 looks away.
+//                  No clear message arrives while Bot1 still looks at the cow.
 //                  Before that, with the default -1, no clear message is sent.
 //
 // With MODE=worldguard (run.sh creates the WorldGuard region "testing_region" around spawn):
@@ -260,6 +265,14 @@ async function main () {
   const bot1 = await createBot('Bot1')
   await sleep(2000)
 
+  // config-update
+  const configText = fs.readFileSync(configPath, 'utf8')
+  const serverLog = fs.readFileSync(path.join(serverDir, 'logs', 'latest.log'), 'utf8')
+  const addedAt = configText.indexOf('# Options added by ActionHealth')
+  const updated = /Added new options to config\.yml: Display Time/.test(serverLog) && addedAt > 0 &&
+    configText.indexOf('Display Time: -1') > addedAt && configText.startsWith('# The message the player is sent.')
+  record('config-update', updated, updated ? '"Display Time" added at the end of config.yml' : 'config.yml end: ' + JSON.stringify(configText.slice(-300)))
+
   // look
   const p = bot1.entity.position
   let since = Date.now()
@@ -292,8 +305,21 @@ async function main () {
   await sleep(1500)
   since = Date.now()
   bot1.attack(cow)
-  bar = await waitForBar(bot1, since, /Cow: [0-9]\/10/, 10000)
+  const damageBar = await waitForBarEntry(bot1, since, /Cow: [0-9]\/10/, 10000)
+  bar = damageBar && damageBar.text
   record('damage', !!bar, bar || 'no "Cow: <10/10" action bar, last: ' + lastBars(bot1))
+
+  // last-damage: the cow had 10 health, so the damage of the hit is 10 minus the health in the message.
+  // Read the damage from the raw message, because mineflayer's toString stops early on 1.8.
+  const health = bar && bar.match(/Cow: ([0-9]+)\/10/)
+  const dealt = damageBar && damageBar.raw.match(/ d([0-9]+)"/)
+  const lastDamageOk = !!health && !!dealt && Number(dealt[1]) === 10 - Number(health[1]) && Number(dealt[1]) > 0
+  record('last-damage', lastDamageOk, damageBar ? `${bar} (last damage ${dealt ? dealt[1] : 'missing'})` : 'no action bar')
+
+  // permission
+  bot1.chat('/actionhealth reload')
+  const denied = await waitFor(() => bot1.chatLines.find((line) => line.includes('You do not have permission to do that')), 5000)
+  record('permission', !!denied, denied || 'no permission message, chat: ' + JSON.stringify(bot1.chatLines.slice(-3)))
 
   // toggle
   since = Date.now()
@@ -322,7 +348,7 @@ async function main () {
   bot1.attack(target)
   await sleep(700)
   bot1.attack(target)
-  const damageBar = await waitForBar(bot1, since, /Bot2:/, 5000)
+  const tagBar = await waitForBar(bot1, since, /Bot2:/, 5000)
 
   const potion = bot2.inventory.items().find((item) => item.name === 'potion')
   if (potion) {
@@ -344,7 +370,7 @@ async function main () {
     bot2.deactivateItem()
   }
   const held = bot2.heldItem ? bot2.heldItem.name : 'nothing'
-  record('consume', !!bar, bar ? `${bar} (damage event: ${damageBar})` : `no CONSUME action bar (Bot2 holds ${held}), last: ` + lastBars(bot1))
+  record('consume', !!bar, bar ? `${bar} (damage event: ${tagBar})` : `no CONSUME action bar (Bot2 holds ${held}), last: ` + lastBars(bot1))
   bot2.quit()
 
   // display-time
@@ -360,24 +386,25 @@ async function main () {
   // so no clear message may arrive while Bot1 still looks at the cow.
   await sleep(2000)
   const blankWhileLooking = bot1.actionBars.find((b) => b.time >= since && isBlank(b))
-  // Yaw 180 faces north, away from the cow.
+  // Yaw 180 faces north, away from the cow. The look check sends the same message only once a
+  // second, but restarts the timer on each check. So the time counts from when Bot1 looks away.
+  const lookedAway = Date.now()
   await command(`tp Bot1 ${Math.floor(q.x) + 0.5} ${Math.floor(q.y)} ${Math.floor(q.z) + 0.5} 180 0`)
   await sleep(3000)
-  const lastCow = bot1.actionBars.filter((b) => /Cow:/.test(b.text)).pop()
-  const cleared = lastCow && bot1.actionBars.find((b) => b.time > lastCow.time && isBlank(b))
-  const delay = cleared ? cleared.time - lastCow.time : null
-  // 10 ticks is 500 ms. Allow for server tick timing.
-  const onTime = delay !== null && delay >= 400 && delay <= 1500
+  const cleared = bot1.actionBars.find((b) => b.time > lookedAway && isBlank(b))
+  const delay = cleared ? cleared.time - lookedAway : null
+  // 10 ticks is 500 ms. Allow for the console command and server tick timing.
+  const onTime = delay !== null && delay >= 300 && delay <= 1500
   record('display-time', !!seen && onTime && !earlyBlank && !blankWhileLooking,
     earlyBlank ? 'got a clear message while Display Time was -1'
       : blankWhileLooking ? 'got a clear message while still looking at the cow'
-        : cleared ? `cleared ${delay} ms after the last health message` : 'no clear message, last: ' + lastBars(bot1))
+        : cleared ? `cleared ${delay} ms after Bot1 looked away` : 'no clear message, last: ' + lastBars(bot1))
 
   bot1.quit()
 }
 
 const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 2], modelengine: [modelEngine, 5] }
-const [run, expected] = modes[process.env.MODE] || [main, 7]
+const [run, expected] = modes[process.env.MODE] || [main, 10]
 run()
   .catch((error) => record('setup', false, error.stack))
   .finally(() => {

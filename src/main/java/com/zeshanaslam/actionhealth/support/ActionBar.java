@@ -39,7 +39,8 @@ public class ActionBar {
         this.logger = logger;
     }
 
-    public void send(Player player, String message) {
+    // Synchronized, because Folia sends messages from many threads and the first send picks the method.
+    public synchronized void send(Player player, String message) {
         while (true) {
             if (sender == null) {
                 sender = findSender(player);

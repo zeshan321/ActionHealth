@@ -3,14 +3,15 @@ package com.zeshanaslam.actionhealth.config;
 import com.zeshanaslam.actionhealth.LookThread;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.ActionStore;
-import com.zeshanaslam.actionhealth.utils.Metrics;
+import com.zeshanaslam.actionhealth.utils.Scheduler;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class ConfigStore {
@@ -43,6 +44,7 @@ public class ConfigStore {
     public String toggleMessage;
     public String enableMessage;
     public String disableMessage;
+    public String noPermissionMessage;
     public boolean hasMVdWPlaceholderAPI;
     public boolean hasPlaceholderAPI;
     public int limitHealth;
@@ -59,6 +61,8 @@ public class ConfigStore {
     public boolean allowMetrics;
 
     public ConfigStore(Main plugin) {
+        Logger logger = plugin.getLogger();
+
         // Clear settings for reloads
         worlds.clear();
         regions.clear();
@@ -101,7 +105,11 @@ public class ConfigStore {
         displayTime = plugin.getConfig().getInt("Display Time", -1);
         if (plugin.getConfig().getBoolean("Name Change")) {
             for (String s : plugin.getConfig().getStringList("Name")) {
-                String[] split = s.split(" = ");
+                String[] split = s.split(" = ", 2);
+                if (split.length != 2) {
+                    logger.warning("Name: '" + s + "' was skipped. Use the format 'Snow Golem = New name'.");
+                    continue;
+                }
                 translate.put(split[0], split[1]);
             }
         }
@@ -143,6 +151,8 @@ public class ConfigStore {
             disableMessage = "&7ActionHealth has been &cdisabled&7.";
         }
 
+        noPermissionMessage = plugin.getConfig().getString("No Permission", "&cYou do not have permission to do that.");
+
         if (plugin.getConfig().contains("Can See")) {
             canSee = plugin.getConfig().getBoolean("Can See");
         } else {
@@ -182,32 +192,32 @@ public class ConfigStore {
         if (plugin.getConfig().contains("LookValues.CheckTicks")) {
             checkTicks = plugin.getConfig().getLong("LookValues.CheckTicks");
         } else {
-            checkTicks = 0;
+            checkTicks = 2;
         }
 
-        if (plugin.taskID != -1) Bukkit.getScheduler().cancelTask(plugin.taskID);
+        if (plugin.lookTask != null) {
+            plugin.lookTask.cancel();
+            plugin.lookTask = null;
+        }
 
-        if (plugin.getConfig().contains("Show On Look")) {
-            showOnLook = plugin.getConfig().getBoolean("Show On Look");
-            lookDistance = plugin.getConfig().getDouble("Look Distance");
+        showOnLook = plugin.getConfig().getBoolean("Show On Look");
+        lookDistance = plugin.getConfig().getDouble("Look Distance");
+        if (showOnLook) {
+            plugin.lookTask = Scheduler.runTimer(plugin, new LookThread(plugin), checkTicks);
+        }
 
-            if (showOnLook) {
-                BukkitTask bukkitTask = new LookThread(plugin).runTaskTimer(plugin, 0, checkTicks);
-                plugin.taskID = bukkitTask.getTaskId();
+        // Empty disables the upper limit, as the config comment says.
+        upperLimit = null;
+        String limit = plugin.getConfig().getString("Upper Limit Health");
+        if (limit != null && !limit.trim().isEmpty()) {
+            String[] limits = limit.split("->");
+            try {
+                upperLimitStart = Integer.parseInt(limits[0].trim());
+                upperLimitLength = Integer.parseInt(limits[1].trim());
+                upperLimit = limit;
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                logger.warning("Upper Limit Health: '" + limit + "' was skipped. Use the format '40 -> 10', or leave it empty.");
             }
-        } else {
-            plugin.taskID = -1;
-            showOnLook = false;
-        }
-
-        if (plugin.getConfig().contains("Upper Limit Health")) {
-            upperLimit = plugin.getConfig().getString("Upper Limit Health");
-
-            String[] limits = upperLimit.split(" -> ");
-            upperLimitStart = Integer.parseInt(limits[0]);
-            upperLimitLength = Integer.parseInt(limits[1]);
-        } else {
-            upperLimit = null;
         }
 
         if (plugin.getConfig().contains("Allow Metrics")) {

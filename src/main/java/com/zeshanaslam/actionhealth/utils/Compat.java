@@ -38,6 +38,8 @@ public final class Compat {
     private static final Method GET_BOUNDING_BOX = Reflect.findMethod(Entity.class, "getBoundingBox");
     private static final Method RAY_TRACE = GET_BOUNDING_BOX == null ? null
             : Reflect.findMethod(GET_BOUNDING_BOX.getReturnType(), "rayTrace", Vector.class, Vector.class, double.class);
+    private static final Method GET_HIT_POSITION = RAY_TRACE == null ? null
+            : Reflect.findMethod(RAY_TRACE.getReturnType(), "getHitPosition");
 
     private Compat() {
     }
@@ -97,16 +99,17 @@ public final class Compat {
     }
 
     /**
-     * Returns true if a ray hits the hitbox of an entity within the distance.
-     * Returns false if it misses, or if the server has no hitbox API (before 1.13.2).
+     * Returns the point where a ray first hits the hitbox of an entity within the distance.
+     * Returns null if it misses, or if the server has no hitbox API (before 1.13.2).
      */
-    public static boolean rayHitsHitbox(Entity entity, Vector start, Vector direction, double distance) {
-        if (RAY_TRACE == null) return false;
+    public static Vector rayTraceHitbox(Entity entity, Vector start, Vector direction, double distance) {
+        if (RAY_TRACE == null || GET_HIT_POSITION == null) return null;
 
         try {
-            return RAY_TRACE.invoke(GET_BOUNDING_BOX.invoke(entity), start, direction, distance) != null;
+            Object result = RAY_TRACE.invoke(GET_BOUNDING_BOX.invoke(entity), start, direction, distance);
+            return result == null ? null : (Vector) GET_HIT_POSITION.invoke(result);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            return false;
+            return null;
         }
     }
 

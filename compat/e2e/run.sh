@@ -22,6 +22,7 @@ shift 5 2>/dev/null || shift $#
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 [ -d "$DIR/node_modules" ] || docker run --rm -v "$DIR:$DIR" -w "$DIR" node:22-slim npm ci --silent
+docker image inspect "ah-jdk$JAVA" > /dev/null 2>&1 || docker build -q --build-arg "JAVA=$JAVA" -t "ah-jdk$JAVA" "$DIR" > /dev/null
 # A new folder for every run. Reusing a folder that the host just cleaned can show stale files
 # inside the Docker VM.
 RUN="$DIR/runs/$(basename "$SPIGOT" .jar)-$(basename "$PLUGIN" .jar)${MODE:+-$MODE}-$(date +%Y%m%d-%H%M%S)-$$"
@@ -34,12 +35,15 @@ for extra in "$@"; do
   case "$(basename "$extra")" in Via*) VIA=1 ;; esac
 done
 
-# Default config with health numbers and a hex color in the message, so the test can read them.
+# Default config with health numbers, the last damage and a hex color in the message, so the
+# test can read them. "Display Time" is removed, as in a config from before 3.7.0: the plugin
+# must add it back.
 STYLE='{usestyle}'
 ICON='"\&4\\u2764"'
 if [ "${MODE:-}" = placeholderapi ]; then STYLE='%player_name% {usestyle}'; ICON='"%player_name%"'; fi
-sed -e "s/^Health Message: .*/Health Message: '\&#4fdfc4\&l{name}: {health}\/{maxhealth} +{absorption} $STYLE'/" \
+sed -e "s/^Health Message: .*/Health Message: '\&#4fdfc4\&l{name}: {health}\/{maxhealth} +{absorption} $STYLE d{opponentlastdamage}'/" \
   -e "s/^Full Health Icon: .*/Full Health Icon: $ICON/" \
+  -e "/^Display Time: /d" \
   "$DIR/../../src/main/resources/config.yml" > "$RUN/plugins/ActionHealth/config.yml"
 
 level=FLAT
