@@ -87,9 +87,10 @@ function createBot (username) {
   const record = (text, raw) => bot.actionBars.push({ time: Date.now(), text, raw })
   bot.on('actionBar', (message) => record(message.toString(), JSON.stringify(message.json)))
   bot.on('messagestr', (text, position) => { if (position !== 'game_info') bot.chatLines.push(text) })
-  // Fallback for protocol versions with a dedicated action bar packet.
+  // Fallback for protocol versions with a dedicated action bar packet, and for the title packet
+  // with the action bar action (2), which Paper's Adventure API uses on 1.11 to 1.16.
   bot._client.on('packet', (data, meta) => {
-    if (meta.name === 'action_bar' || meta.name === 'set_action_bar_text') {
+    if (meta.name === 'action_bar' || meta.name === 'set_action_bar_text' || (meta.name === 'title' && data.action === 2)) {
       try {
         const message = require('prismarine-chat')(bot.registry).fromNotch(data.text)
         record(message.toString(), JSON.stringify(message.json))

@@ -76,7 +76,7 @@ check_fill paper 1.8.8 8 1.8.8
 check_fill paper 1.20.6 21 1.20.6
 check_fill paper 1.21.11 21 1.21.11
 check_fill paper 26.3 25 26.1 "$VIA_DIR/ViaVersion-$VIA.jar" "$VIA_DIR/ViaBackwards-$VIA.jar"
-ACTIONBAR=adventure check_run "Paper 1.16.5 (Adventure)" paper-1.16.5-adventure "$(fill paper 1.16.5)" 1.16.5 17 "$PLUGIN" 1.16.5
+ACTIONBAR=adventure check_run "Paper 1.16.5 (Adventure)" paper-1.16.5-adventure "$(fill paper 1.16.5)" 1.16.5 8 "$PLUGIN" 1.16.5
 check_fill folia 1.21.11 21 1.21.11
 check_fill folia 26.2 25 26.1 "$VIA_DIR/ViaVersion-$VIA.jar" "$VIA_DIR/ViaBackwards-$VIA.jar"
 exit $failed

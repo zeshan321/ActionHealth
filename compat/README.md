@@ -65,7 +65,7 @@ compat/e2e/integrations.sh   # WorldGuard and PlaceholderAPI
 - The PlaceholderAPI check on 1.8.8 and 26.3: `%player_name%` in the health message and in the health icons shows the player name.
 - The ModelEngine check on 1.20.4, with a test model that has a hitbox 3 blocks wide and 4 blocks high. The bot looks straight ahead at the model, looks up at its body from 4 and 7 blocks, and looks over it (no action bar). Then it hits the hitbox entity that ModelEngine shows. ModelEngine has no public download URL, so this check runs only if a `ModelEngine-*.jar` is in `compat/.cache/plugins`. The free [Legacy Model Engine Demo](https://www.spigotmc.org/resources/106521/) (R3) works.
 - The main test on Paper 1.8.8, 1.20.6, 1.21.11 and 26.3. Paper changes how plugin reflection works on 1.20.5+, so Paper needs its own check.
-- The main test on Paper 1.16.5 with `ACTIONBAR=adventure`. 1.16.5 is the oldest Paper version with Adventure.
+- The main test on Paper 1.16.5 (Java 8) with `ACTIONBAR=adventure`. 1.16.5 is the oldest Paper version with Adventure. On 1.11 to 1.16, Adventure sends the action bar in a title packet, and the bot reads that packet too.
 - The main test on Folia 1.21.11 and 26.2. Folia runs events and commands on many threads.
 
 To test a new Minecraft version, add a line to `matrix.txt` and run `matrix.sh`. The scripts also take a Paper or Folia jar: `run.sh <paper.jar> <version> <java> <plugin.jar>`. To test one action bar method, set `ACTIONBAR`, for example `ACTIONBAR=adventure run.sh ...`.
@@ -83,15 +83,18 @@ To test a new Minecraft version, add a line to `matrix.txt` and run `matrix.sh`.
 
 ### Results
 
-| Server | 3.5.9 | 3.8.0 |
-| --- | --- | --- |
-| Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass |
-| Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass |
-| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass |
-| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass |
-| Folia 1.21.11 and 26.2 | Not run | Pass. Folia does not load 3.7.1 and older, because their plugin.yml does not have `folia-supported: true` |
-| WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass |
-| PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass |
-| ModelEngine R3.1.11 on 1.20.4 | Not run | Pass. 3.7.0 failed the two checks that look up at the body |
+| Server | 3.5.9 | 3.8.0 | 3.8.1 |
+| --- | --- | --- | --- |
+| Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass | Pass |
+| Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass | Pass |
+| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass | Pass |
+| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass | Pass |
+| Paper 1.16.5 and 1.21.11 with the Adventure method | Not run | Not run (no Adventure method) | Pass |
+| Folia 1.21.11 and 26.2 | Not run | Pass. Folia does not load 3.7.1 and older, because their plugin.yml does not have `folia-supported: true` | Pass |
+| WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass | Pass, without WorldGuardWrapper |
+| PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass | Pass |
+| ModelEngine R3.1.11 on 1.20.4 | Not run | Pass. 3.7.0 failed the two checks that look up at the body | Pass |
+
+On Spigot 1.21.11, 3.8.0 fails the new checks method, toggle-message, action-damage and action-tags. 3.8.1 passes them.
 
 3.6.0 failed on Paper 1.20.6. Paper's reflection remapper threw on `getMethod("getName", (Class<?>[]) null)`. 3.6.1 fixes this, and the Paper check is now part of `integrations.sh`.
