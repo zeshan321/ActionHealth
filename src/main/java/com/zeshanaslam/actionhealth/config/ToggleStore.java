@@ -15,21 +15,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The players who turned ActionHealth off with /actionhealth toggle.
+ * The players who turned ActionHealth off or on with /actionhealth toggle.
  * <p>
- * With "Remember Toggle", the list is saved in toggles.yml and read once at startup.
+ * Players who made no choice get "Enabled By Default". Both choices are kept, not only the ones
+ * that differ from the default, so a change of the default does not turn a saved choice around.
+ * <p>
+ * With "Remember Toggle", the lists are saved in toggles.yml and read once at startup.
  * Versions before 3.8.0 saved one file per player in the players folder. That folder is
  * moved into toggles.yml the first time this version starts.
  */
 public class ToggleStore {
 
     private static final String KEY = "toggled";
+    private static final String ENABLED_KEY = "enabled";
 
     private final File file;
     private final File legacyFolder;
     private final Logger logger;
     // Thread safe, because Folia runs commands and events on many threads.
     private final Set<UUID> toggled = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> enabled = ConcurrentHashMap.newKeySet();
+    private volatile boolean enabledByDefault = true;
 
     public ToggleStore(File dataFolder, Logger logger) {
         this.file = new File(dataFolder, "toggles.yml");
@@ -37,15 +43,32 @@ public class ToggleStore {
         this.logger = logger;
     }
 
+    /**
+     * Returns true if ActionHealth is off for the player.
+     */
     public boolean isToggled(UUID uuid) {
-        return toggled.contains(uuid);
+        if (toggled.contains(uuid)) return true;
+        if (enabled.contains(uuid)) return false;
+        return !enabledByDefault;
     }
 
     /**
-     * Turns ActionHealth off (true) or on (false) for a player. Saves the list if remember is true.
+     * Sets whether players who made no choice see health messages ("Enabled By Default").
+     */
+    public void setEnabledByDefault(boolean enabledByDefault) {
+        this.enabledByDefault = enabledByDefault;
+    }
+
+    /**
+     * Turns ActionHealth off (true) or on (false) for a player. Saves the lists if remember is true.
      */
     public void setToggled(UUID uuid, boolean off, boolean remember) {
-        boolean changed = off ? toggled.add(uuid) : toggled.remove(uuid);
+        boolean changed;
+        if (off) {
+            changed = toggled.add(uuid) | enabled.remove(uuid);
+        } else {
+            changed = toggled.remove(uuid) | enabled.add(uuid);
+        }
         if (changed && remember) save();
     }
 
@@ -54,6 +77,7 @@ public class ToggleStore {
      */
     public void forget(UUID uuid) {
         toggled.remove(uuid);
+        enabled.remove(uuid);
     }
 
     /**
@@ -63,11 +87,16 @@ public class ToggleStore {
         migrateLegacyFolder();
         if (!remember || !file.exists()) return;
 
-        toggled.addAll(readFile());
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        toggled.addAll(read(yaml, KEY));
+        for (UUID uuid : read(yaml, ENABLED_KEY)) {
+            // A player in both lists (edited by hand) counts as off.
+            if (!toggled.contains(uuid)) enabled.add(uuid);
+        }
     }
 
     public synchronized void save() {
-        write(toggled);
+        write(toggled, enabled);
     }
 
     private void migrateLegacyFolder() {
@@ -88,7 +117,7 @@ public class ToggleStore {
             }
         }
 
-        if (!write(saved)) return;
+        if (!write(saved, Collections.<UUID>emptySet())) return;
         File renamed = new File(legacyFolder.getParentFile(), "players-old");
         if (legacyFolder.renameTo(renamed)) {
             logger.info("Moved " + moved + " saved toggle choices from the players folder to toggles.yml. "
@@ -98,11 +127,9 @@ public class ToggleStore {
         }
     }
 
-    private Set<UUID> readFile() {
+    private Set<UUID> read(YamlConfiguration yaml, String key) {
         Set<UUID> result = new HashSet<>();
-        if (!file.exists()) return result;
-
-        for (String value : YamlConfiguration.loadConfiguration(file).getStringList(KEY)) {
+        for (String value : yaml.getStringList(key)) {
             UUID uuid = parse(value);
             if (uuid != null) {
                 result.add(uuid);
@@ -114,15 +141,12 @@ public class ToggleStore {
         return result;
     }
 
-    private boolean write(Set<UUID> uuids) {
-        List<String> values = new ArrayList<>();
-        for (UUID uuid : uuids) values.add(uuid.toString());
-        Collections.sort(values);
-
+    private boolean write(Set<UUID> off, Set<UUID> on) {
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.options().header("Players who turned ActionHealth off with /actionhealth toggle. "
+        yaml.options().header("Players who turned ActionHealth off (toggled) or on (enabled) with /actionhealth toggle. "
                 + "Used when 'Remember Toggle' is true.");
-        yaml.set(KEY, values);
+        yaml.set(KEY, sorted(off));
+        yaml.set(ENABLED_KEY, sorted(on));
         try {
             file.getParentFile().mkdirs();
             yaml.save(file);
@@ -131,6 +155,13 @@ public class ToggleStore {
             logger.log(Level.WARNING, "Could not save " + file.getName(), e);
             return false;
         }
+    }
+
+    private static List<String> sorted(Set<UUID> uuids) {
+        List<String> values = new ArrayList<>();
+        for (UUID uuid : uuids) values.add(uuid.toString());
+        Collections.sort(values);
+        return values;
     }
 
     private static UUID parse(String value) {

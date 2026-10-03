@@ -6,6 +6,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -24,6 +25,11 @@ public final class Scheduler {
     private static final Method GLOBAL_RUN_AT_FIXED_RATE = FOLIA ? Reflect.findMethod(
             Reflect.findClass("io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler"),
             "runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class) : null;
+
+    private static final Method GET_ASYNC_SCHEDULER = FOLIA ? Reflect.findMethod(Bukkit.class, "getAsyncScheduler") : null;
+    private static final Method ASYNC_RUN_AT_FIXED_RATE = FOLIA ? Reflect.findMethod(
+            Reflect.findClass("io.papermc.paper.threadedregions.scheduler.AsyncScheduler"),
+            "runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class, TimeUnit.class) : null;
 
     private static final Method IS_OWNED_BY_CURRENT_REGION = FOLIA
             ? Reflect.findMethod(Bukkit.class, "isOwnedByCurrentRegion", Entity.class) : null;
@@ -67,6 +73,26 @@ public final class Scheduler {
         Consumer<Object> consumer = scheduled -> task.run();
         try {
             return wrap(GLOBAL_RUN_AT_FIXED_RATE.invoke(GET_GLOBAL_SCHEDULER.invoke(null), plugin, consumer, 1L, period));
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            throw new IllegalStateException("Could not schedule a task on Folia", e);
+        }
+    }
+
+    /**
+     * Runs the task every period seconds on a background thread, starting after delay seconds.
+     * The task must not use the server API, apart from methods that are safe on any thread.
+     */
+    public static Task runAsyncTimer(Plugin plugin, Runnable task, long delaySeconds, long periodSeconds) {
+        if (!FOLIA) {
+            BukkitTask bukkitTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task,
+                    Math.max(1, delaySeconds * 20), Math.max(1, periodSeconds * 20));
+            return bukkitTask::cancel;
+        }
+
+        Consumer<Object> consumer = scheduled -> task.run();
+        try {
+            return wrap(ASYNC_RUN_AT_FIXED_RATE.invoke(GET_ASYNC_SCHEDULER.invoke(null), plugin, consumer,
+                    Math.max(1, delaySeconds), Math.max(1, periodSeconds), TimeUnit.SECONDS));
         } catch (ReflectiveOperationException | RuntimeException e) {
             throw new IllegalStateException("Could not schedule a task on Folia", e);
         }

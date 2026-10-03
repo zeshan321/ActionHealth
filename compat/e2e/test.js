@@ -5,7 +5,9 @@
 // Scenarios:
 //   look    - Bot1 looks at a cow and gets "Cow: 10/10 ..." ("Show On Look").
 //   hex     - The message color &#4fdfc4 arrives as that hex color (1.16+) or as aqua, the closest legacy color.
+//   health-color - {healthcolor} before {health} makes "10/10" green, the 'Health Colors' color for full health.
 //   absorption - The cow gets 8 absorption health. The bar shows "+8" and 8 absorption icons after the 10 health icons.
+//   decimals - With "Health Decimals: 1", the bar shows "Cow: 10.0/10.0".
 //   config-update - run.sh removes "Display Time" from the config. The plugin adds it back at the end
 //                   of the file, with its comment, and keeps the rest of the file.
 //   method  - The server log names the action bar method that works. With ACTIONBAR (run.sh starts
@@ -23,6 +25,11 @@
 //   display-time - With "Display Time: 10", the bar is cleared about 10 ticks after Bot1 looks away.
 //                  No clear message arrives while Bot1 still looks at the cow.
 //                  Before that, with the default -1, no clear message is sent.
+//   update-check - run.sh makes the update check read 99.0.0. The server log names the new version,
+//                  and Bot3, an operator, gets the 'Update Message' when they join.
+//   reload-message - Bot3 runs /actionhealth reload and gets the 'Reload Message'.
+//   default-off - With "Enabled By Default: false", Bot3 gets no action bar while looking at a cow.
+//                 After /actionhealth toggle, Bot3 gets it.
 //
 // With MODE=worldguard (run.sh creates the WorldGuard region "testing_region" around spawn):
 //   region-blocks  - no action bar inside the region, which is in "Disabled regions".
@@ -302,6 +309,10 @@ async function main () {
   const hexColor = versionAtLeast(serverVersion, '1.16') ? /"color":"#4fdfc4"/i : /"color":"aqua"|^\{"text":"\u00a7b/
   record('hex', !!lookBar && hexColor.test(lookBar.raw) && !/4fdfc4/i.test(lookBar.text), lookBar ? lookBar.raw : 'no action bar')
 
+  // health-color: run.sh puts {healthcolor} before {health}. The cow has full health, so the color is
+  // &a (green). No other part of the message is green. Some versions send legacy text, where \u00a7a is green.
+  record('health-color', !!lookBar && /"color":"green"|\u00a7a/.test(lookBar.raw), lookBar ? lookBar.raw : 'no action bar')
+
   // absorption
   const effects = effectCommands()
   since = Date.now()
@@ -313,6 +324,15 @@ async function main () {
   record('absorption', !!bar && icons === 18, bar ? `${bar} (${icons} icons, expected 18)` : 'no "+8" action bar, last: ' + lastBars(bot1))
   await command(effects.clear)
   await sleep(500)
+
+  // decimals: Bot1 still looks at the cow.
+  editConfig([['Health Decimals: 0', 'Health Decimals: 1']])
+  await command('actionhealth reload')
+  since = Date.now()
+  bar = await waitForBar(bot1, since, /Cow: 10\.0\/10\.0/, 5000)
+  record('decimals', !!bar, bar || 'no "Cow: 10.0/10.0" action bar, last: ' + lastBars(bot1))
+  editConfig([['Health Decimals: 1', 'Health Decimals: 0']])
+  await command('actionhealth reload')
 
   // damage
   editConfig([['Show On Look: true', 'Show On Look: false']])
@@ -442,11 +462,47 @@ async function main () {
       : blankWhileLooking ? 'got a clear message while still looking at the cow'
         : cleared ? `cleared ${delay} ms after Bot1 looked away` : 'no clear message, last: ' + lastBars(bot1))
 
+  // update-check: the plugin checks 5 seconds after it starts, long before this point.
+  const updateLog = /ActionHealth 99\.0\.0 is available\. This server runs [0-9.]+\./.test(
+    fs.readFileSync(path.join(serverDir, 'logs', 'latest.log'), 'utf8'))
+  editConfig([['Enabled By Default: true', 'Enabled By Default: false']])
+  await command('actionhealth reload')
+  // Bot3 joins once, so the server knows the player, and joins again as an operator.
+  let bot3 = await createBot('Bot3')
+  await command('op Bot3')
+  bot3.quit()
+  await sleep(1500)
+  bot3 = await createBot('Bot3')
+  const notice = await waitFor(() => bot3.chatLines.find((line) => line.includes('ActionHealth 99.0.0 is available')), 8000)
+  record('update-check', updateLog && !!notice,
+    !updateLog ? 'no "ActionHealth 99.0.0 is available" line in the server log'
+      : notice || 'no update message for Bot3, chat: ' + JSON.stringify(bot3.chatLines.slice(-3)))
+
+  // reload-message
+  bot3.chat('/actionhealth reload')
+  const reloaded = await waitFor(() => bot3.chatLines.find((line) => line.includes('ActionHealth has been reloaded!')), 5000)
+  record('reload-message', !!reloaded, reloaded || 'no reload message, chat: ' + JSON.stringify(bot3.chatLines.slice(-3)))
+
+  // default-off: Bot3 never turned ActionHealth on.
+  const r = bot3.entity.position
+  since = Date.now()
+  await cowInFront(bot3, Math.floor(r.x) + 0.5, Math.floor(r.y), Math.floor(r.z) + 0.5)
+  const offBar = await waitForBar(bot3, since, /Cow:/, 3000)
+  bot3.chat('/actionhealth toggle')
+  const turnedOn = await waitFor(() => bot3.chatLines.find((line) => line.includes('ActionHealth has been enabled')), 5000)
+  since = Date.now()
+  const onBar = await waitForBar(bot3, since, /Cow:/, 5000)
+  record('default-off', !offBar && !!turnedOn && !!onBar,
+    offBar ? 'got an action bar before turning ActionHealth on: ' + offBar
+      : !turnedOn ? 'no enable message' : onBar ? 'no action bar until /actionhealth toggle, then: ' + onBar
+        : 'no action bar after /actionhealth toggle, last: ' + lastBars(bot3))
+  bot3.quit()
+
   bot1.quit()
 }
 
 const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 2], modelengine: [modelEngine, 5] }
-const [run, expected] = modes[process.env.MODE] || [main, 14]
+const [run, expected] = modes[process.env.MODE] || [main, 19]
 run()
   .catch((error) => record('setup', false, error.stack))
   .finally(() => {

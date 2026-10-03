@@ -131,6 +131,19 @@ class ConfigUpdaterTest {
     }
 
     @Test
+    void theHeaderNamesTheOptionsThatChangeWhatThePluginDoes() throws Exception {
+        String defaults = defaults();
+        String withoutCheck = without(without(defaults, "Update Check"), "Health Decimals");
+        String withoutDecimals = without(defaults, "Health Decimals");
+
+        String updated = ConfigUpdater.addMissing(withoutCheck, defaults, parse(withoutCheck).getKeys(false), "3.9.0", new ArrayList<>());
+        assertTrue(updated.contains("give the same result as before the update, except Update Check."), updated);
+
+        updated = ConfigUpdater.addMissing(withoutDecimals, defaults, parse(withoutDecimals).getKeys(false), "3.9.0", new ArrayList<>());
+        assertTrue(updated.contains("give the same result as before the update.\n"), updated);
+    }
+
+    @Test
     void keepsWindowsLineEndings() throws Exception {
         String defaults = defaults();
         String old = without(defaults, "No Permission").replace("\n", "\r\n");
@@ -207,7 +220,8 @@ class ConfigUpdaterTest {
                 .collect(Collectors.toSet());
         Set<String> known = new HashSet<>(Arrays.asList(
                 "LookValues.CheckTicks", "LookValues.Dot", "LookValues.Tolerance",
-                "Action.Enabled", "Action.TagLength", "Action.TagAmount", "Action.Events"));
+                "Action.Enabled", "Action.TagLength", "Action.TagAmount", "Action.Events",
+                "Health Colors.75", "Health Colors.50", "Health Colors.25", "Health Colors.0"));
         assertEquals(known, nested);
     }
 }

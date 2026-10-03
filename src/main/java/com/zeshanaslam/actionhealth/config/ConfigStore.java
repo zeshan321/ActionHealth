@@ -8,9 +8,13 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
+import org.bukkit.configuration.ConfigurationSection;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -59,6 +63,13 @@ public class ConfigStore {
     public int upperLimitStart;
     public int upperLimitLength;
     public boolean allowMetrics;
+    public int healthDecimals;
+    public TreeMap<Integer, String> healthColors = new TreeMap<>();
+    public boolean enabledByDefault;
+    public boolean updateCheck;
+    public String reloadMessage;
+    public List<String> helpMessage;
+    public String updateMessage;
 
     public ConfigStore(Main plugin) {
         Logger logger = plugin.getLogger();
@@ -152,6 +163,26 @@ public class ConfigStore {
         }
 
         noPermissionMessage = plugin.getConfig().getString("No Permission", "&cYou do not have permission to do that.");
+        reloadMessage = plugin.getConfig().getString("Reload Message", "&cActionHealth &7has been reloaded!");
+        helpMessage = plugin.getConfig().contains("Help Message") ? plugin.getConfig().getStringList("Help Message")
+                : Arrays.asList("&cActionHealth Commands:", "&7/{label} reload", "&7/{label} toggle");
+        updateMessage = plugin.getConfig().getString("Update Message", "");
+
+        healthDecimals = Math.max(0, Math.min(3, plugin.getConfig().getInt("Health Decimals", 0)));
+        ConfigurationSection colors = plugin.getConfig().getConfigurationSection("Health Colors");
+        if (colors != null) {
+            for (String key : colors.getKeys(false)) {
+                try {
+                    healthColors.put(Integer.parseInt(key.trim()), colors.getString(key));
+                } catch (NumberFormatException e) {
+                    logger.warning("Health Colors: '" + key + "' was skipped. Use a percentage from 0 to 100, for example 50: '&e'.");
+                }
+            }
+        }
+        // Missing in configs from before 3.9.0, which keeps their behavior unchanged.
+        enabledByDefault = plugin.getConfig().getBoolean("Enabled By Default", true);
+        // On by default, also for configs from before 3.9.0. ConfigUpdater adds the option with its comment.
+        updateCheck = plugin.getConfig().getBoolean("Update Check", true);
 
         if (plugin.getConfig().contains("Can See")) {
             canSee = plugin.getConfig().getBoolean("Can See");

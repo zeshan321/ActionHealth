@@ -2,6 +2,8 @@ package com.zeshanaslam.actionhealth.events;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.ActionStore;
+import com.zeshanaslam.actionhealth.support.UpdateChecker;
+import com.zeshanaslam.actionhealth.utils.Colors;
 import com.zeshanaslam.actionhealth.utils.Scheduler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -11,6 +13,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public class HealthListeners implements Listener {
@@ -77,6 +80,28 @@ public class HealthListeners implements Listener {
         if (event.getEntity() instanceof LivingEntity) {
             plugin.healthUtil.setLastDamage((LivingEntity) event.getEntity(), event.getFinalDamage());
         }
+    }
+
+    // Tells players with ActionHealth.Update about a new version. A short delay, so the message
+    // comes after the join messages of other plugins.
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        UpdateChecker checker = plugin.updateChecker;
+        String message = plugin.configStore.updateMessage;
+        if (checker.getLatest() == null || message == null || message.isEmpty() || !player.hasPermission("ActionHealth.Update")) {
+            return;
+        }
+
+        Scheduler.runLaterFor(plugin, player, () -> {
+            String latest = checker.getLatest();
+            if (latest == null || !player.isOnline()) return;
+
+            String text = plugin.healthUtil.replacePlaceholders(message, "version", latest);
+            text = plugin.healthUtil.replacePlaceholders(text, "current", checker.getCurrent());
+            text = plugin.healthUtil.replacePlaceholders(text, "url", UpdateChecker.DOWNLOAD_URL);
+            player.sendMessage(Colors.translate(text));
+        }, 40);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

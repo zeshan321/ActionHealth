@@ -17,3 +17,6 @@ permissions:
   ActionHealth.Toggle:
     description: Lets a player use /actionhealth toggle.
     default: true
+  ActionHealth.Update:
+    description: Tells a player about a new ActionHealth version when they join. Applies only when 'Update Check' is true.
+    default: op

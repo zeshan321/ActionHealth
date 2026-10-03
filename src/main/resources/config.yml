@@ -7,6 +7,7 @@
 # {opponentlastdamage} the amount of damage the enemy last received.
 # {percenthealth} displays the percentage of health left.
 # {absorption} shows the absorption health of the mob or player.
+# {healthcolor} the color for the health left, from 'Health Colors'. For example '{healthcolor}{health}'.
 #
 # Colors: use & codes, or hex colors as &#RRGGBB (1.16+, older servers show the closest color).
 # {name} has its colors removed when 'Strip Name' is true. Use {displayname} to keep player nickname colors.
@@ -24,6 +25,8 @@ Health Message: '&7&l{name}: {usestyle}'
 Non Player Message: ''
 
 # The message the player is sent to the player if they have actionhealth disabled.
+# It shows while they look at an entity. With 'Enabled By Default: false', players who did not
+# turn ActionHealth on yet also get it, so it can tell them how: '&7/actionhealth toggle shows health'.
 # {name} shows the name of the player.
 Toggle Message: ''
 
@@ -37,6 +40,15 @@ On Disable: '&7ActionHealth has been &cdisabled&7.'
 
 # Message sent to a player who runs a command without the permission for it.
 No Permission: '&cYou do not have permission to do that.'
+
+# Message sent after /actionhealth reload.
+Reload Message: '&cActionHealth &7has been reloaded!'
+
+# Lines sent for /actionhealth without a subcommand. {label} shows the command that the player typed.
+Help Message:
+  - '&cActionHealth Commands:'
+  - '&7/{label} reload'
+  - '&7/{label} toggle'
 
 # Strip Name.
 Strip Name: true
@@ -57,6 +69,18 @@ Show NPC: true
 Delay Message: false
 # Amount delayed by
 Delay Tick: 1
+
+# Number of decimals for {health}, {maxhealth}, {absorption} and {opponentlastdamage}, from 0 to 3.
+# Extra decimals are cut off, not rounded. A living entity never shows 0 health.
+Health Decimals: 0
+
+# Colors for {healthcolor}, by the percentage of health left. Each line is 'percentage: color'.
+# The color of the highest percentage that the health is at or above is used.
+Health Colors:
+  75: '&a'
+  50: '&e'
+  25: '&6'
+  0: '&c'
 
 # Style Health
 # Icons can use PlaceholderAPI placeholders, for example font images.
@@ -92,6 +116,9 @@ Upper Limit Health: "40 -> 10"
 
 # Saves players /actionhealth toggle state in plugins/ActionHealth/toggles.yml.
 Remember Toggle: false
+
+# If false, players do not see health messages until they turn them on with /actionhealth toggle.
+Enabled By Default: true
 
 # Blacklist by entity name or entity display name.
 # Also supports MythicMobs using the internal name.
@@ -142,6 +169,15 @@ Use Client Language: false
 
 # Allows bstats metrics. Useful to allow better understanding of version support and more metrics useful for maintaining
 Allow Metrics: true
+
+# Checks spigotmc.org once a day for a new ActionHealth version. The request asks only for the
+# latest version number. A new version is logged in the console, and players with the
+# permission ActionHealth.Update get the 'Update Message' when they join.
+Update Check: true
+
+# {version} shows the new version, {current} the version that the server runs, {url} the download page.
+# Set to '' to send no message to players.
+Update Message: '&7ActionHealth &c{version} &7is available. This server runs {current}. Download it at {url}'
 
 # If enabled, when a player gets into combat they will be tagged for the configurable amount of time.
 # When the enemy triggers an action the provided message will be sent.
