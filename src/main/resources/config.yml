@@ -78,7 +78,8 @@ Disabled worlds:
 Disabled regions:
   - testing_region
 
-# Disable ActionHealth in regions where PvP is denied.
+# Hides the health for hits that another plugin cancelled, for example WorldGuard in regions where PvP is denied.
+# If false, cancelled hits also show the health. The health does not go down, because the hit did no damage.
 Region PvP: true
 
 # Limits the health style to a certain amount of symbols. Static limit (-1 to disable)

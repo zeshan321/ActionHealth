@@ -32,16 +32,14 @@ public class LookThread implements Runnable {
     private void look(Player player) {
         if (!player.isOnline()) return;
 
-        if (plugin.toggles.isToggled(player.getUniqueId())) {
-            if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
-                plugin.healthUtil.sendActionBar(player, plugin.healthUtil.replacePlaceholders(plugin.configStore.toggleMessage, "name", player.getName()), true);
-            }
-            return;
-        }
+        // A player who turned ActionHealth off sees the toggle message instead of the health, and
+        // only while looking at an entity. Without a toggle message there is nothing to show.
+        boolean toggled = plugin.toggles.isToggled(player.getUniqueId());
+        if (toggled && !plugin.healthUtil.hasToggleMessage()) return;
 
         List<LivingEntity> entities = targetHelper.getLivingTargets(player, plugin.configStore.lookDistance);
         for (LivingEntity livingEntity : entities) {
-            if (!plugin.healthUtil.matchesRequirements(player, livingEntity)) continue;
+            if (!plugin.healthUtil.matchesFilters(player, livingEntity)) continue;
 
             String name = plugin.healthUtil.getName(livingEntity, player);
 
@@ -52,7 +50,11 @@ public class LookThread implements Runnable {
                     }
                 }
 
-                plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth(), true);
+                if (toggled) {
+                    plugin.healthUtil.sendToggleMessage(player, true);
+                } else {
+                    plugin.healthUtil.sendHealth(player, livingEntity, livingEntity.getHealth(), true);
+                }
                 break;
             }
         }

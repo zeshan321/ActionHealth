@@ -4,27 +4,23 @@ plugins {
 }
 
 group = 'com.zeshanaslam'
-version = '3.8.0'
+version = '3.8.1'
 
 repositories {
     mavenCentral()
     maven {
         name = 'spigotmc-repo'
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-    }
-    maven {
-        name = 'codemc-repo'
-        url = 'https://repo.codemc.org/repository/maven-public/'
+        // The public group, not only snapshots: spigot-api 1.8.8 needs bungeecord-chat 1.8-SNAPSHOT from it.
+        url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
     }
 }
 
 dependencies {
     // Compile against the oldest supported API (1.8.8). Anything newer must go through
     // feature detection, so one jar runs on every Spigot version from 1.8 to current.
-    // Optional plugins (PlaceholderAPI, MVdWPlaceholderAPI, MythicMobs, LangUtils) are
-    // reached through reflection and need no compile dependency.
+    // Optional plugins (WorldGuard, PlaceholderAPI, MVdWPlaceholderAPI, MythicMobs, LangUtils)
+    // are reached through reflection and need no compile dependency.
     compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
-    implementation 'org.codemc.worldguardwrapper:worldguardwrapper:1.2.1-SNAPSHOT'
     // bStats 3.1+ also runs on Folia.
     implementation 'org.bstats:bstats-bukkit:3.2.1'
 
@@ -59,9 +55,14 @@ processResources {
     }
 }
 
+// The same source gives the same jar, so the checksum of a release matches the jar that CI tested.
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
 shadowJar {
     minimize()
-    relocate 'org.codemc.worldguardwrapper', 'com.zeshanaslam.actionhealth.libs.worldguardwrapper'
     // bStats requires a relocation, so each plugin reports its own data.
     relocate 'org.bstats', 'com.zeshanaslam.actionhealth.libs.bstats'
 }

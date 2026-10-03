@@ -5,6 +5,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -25,43 +26,37 @@ public class ActionListener implements Listener {
         this.actionHelper = actionHelper;
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onCombat(EntityDamageByEntityEvent event) {
-        if (!main.configStore.actionStore.enabled)
+    // One handler for all damage, so the tag of this hit exists before the DAMAGE message is sent.
+    // MONITOR, because it only reads the event and the final damage.
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent event) {
+        ActionStore actionStore = main.configStore.actionStore;
+        if (!actionStore.enabled)
             return;
 
-        ActionStore.ActionType actionType = ActionStore.ActionType.DAMAGE;
+        if (event instanceof EntityDamageByEntityEvent) {
+            tag((EntityDamageByEntityEvent) event);
+        }
+
+        if (event.getEntity() instanceof LivingEntity) {
+            LivingEntity livingEntity = (LivingEntity) event.getEntity();
+            // ANY covers every damage cause. Otherwise the message of the cause is used, for example LAVA.
+            String name = actionStore.isUsingAnyDamageCause ? "ANY" : event.getCause().name();
+            actionHelper.executeTriggers(ActionStore.ActionType.DAMAGE, livingEntity, name, livingEntity.getHealth() - event.getFinalDamage());
+        }
+    }
+
+    private void tag(EntityDamageByEntityEvent event) {
+        ActionStore actionStore = main.configStore.actionStore;
         Player damager = actionHelper.getDamagerFromEntity(event.getDamager());
         if (damager == null && event.getDamager() instanceof Player) {
             damager = (Player) event.getDamager();
         }
 
         if (damager != null && event.getEntity() instanceof Player) {
-            Player damaged = (Player) event.getEntity();
-
-            main.configStore.actionStore.addTag(damager.getUniqueId(), damaged.getUniqueId());
-        } else if (damager != null && main.configStore.actionStore.events.containsKey(actionType)) {
-            main.configStore.actionStore.addTag(damager.getUniqueId(), event.getEntity().getUniqueId());
-        }
-
-        if (!main.configStore.actionStore.isUsingAnyDamageCause) {
-            EntityDamageEvent.DamageCause damageCause = event.getCause();
-            if (event.getEntity() instanceof LivingEntity)
-                actionHelper.executeTriggers(actionType, (LivingEntity) event.getEntity(), damageCause.name());
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onDamage(EntityDamageEvent event) {
-        if (!main.configStore.actionStore.enabled)
-            return;
-
-        Entity entity = event.getEntity();
-        ActionStore.ActionType actionType = ActionStore.ActionType.DAMAGE;
-
-        if (entity instanceof LivingEntity) {
-            LivingEntity livingEntity = (LivingEntity) entity;
-            actionHelper.executeTriggers(actionType, livingEntity, "ANY", livingEntity.getHealth() - event.getFinalDamage());
+            actionStore.addTag(damager.getUniqueId(), event.getEntity().getUniqueId());
+        } else if (damager != null && actionStore.events.containsKey(ActionStore.ActionType.DAMAGE)) {
+            actionStore.addTag(damager.getUniqueId(), event.getEntity().getUniqueId());
         }
     }
 

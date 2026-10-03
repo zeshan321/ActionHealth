@@ -8,11 +8,18 @@
 //   absorption - The cow gets 8 absorption health. The bar shows "+8" and 8 absorption icons after the 10 health icons.
 //   config-update - run.sh removes "Display Time" from the config. The plugin adds it back at the end
 //                   of the file, with its comment, and keeps the rest of the file.
+//   method  - The server log names the action bar method that works. With ACTIONBAR (run.sh starts
+//             the plugin with that method), it must be that method.
 //   damage  - "Show On Look" off and /actionhealth reload, then Bot1 hits the cow and gets "Cow: <10/10".
 //   last-damage - The same message shows the damage of the hit with {opponentlastdamage}.
 //   permission - Bot1 is not an operator. /actionhealth reload shows the no permission message.
 //   toggle  - /actionhealth toggle stops the messages.
+//   toggle-message - With a "Toggle Message", Bot1 (toggled off) gets it while looking at a cow,
+//                    and no longer after looking away.
+//   action-damage - Action system with the default "DAMAGE: ANY": one hit on Bot2 gives Bot1 one
+//                   message, the ANY message, not the health message too.
 //   consume - Action system: Bot1 tags Bot2, Bot2 drinks a regeneration potion, Bot1 gets the CONSUME message.
+//   action-tags - Bot1 hit Bot2 twice, but gets the CONSUME message once (one tag for each target).
 //   display-time - With "Display Time: 10", the bar is cleared about 10 ticks after Bot1 looks away.
 //                  No clear message arrives while Bot1 still looks at the cow.
 //                  Before that, with the default -1, no clear message is sent.
@@ -281,6 +288,13 @@ async function main () {
   let bar = lookBar && lookBar.text
   record('look', !!bar, bar || 'no "Cow: 10/10" action bar, last: ' + lastBars(bot1))
 
+  // method: the plugin logs the method after the first action bar that works.
+  const methods = { spigot: 'Spigot API', adventure: 'Adventure API', paper: 'Paper API', packet: 'NMS packet' }
+  const methodLine = fs.readFileSync(path.join(serverDir, 'logs', 'latest.log'), 'utf8').match(/Sending action bars with the ([A-Za-z ]+)\./)
+  const expectedMethod = methods[process.env.ACTIONBAR]
+  record('method', !!methodLine && (!expectedMethod || methodLine[1] === expectedMethod),
+    methodLine ? methodLine[1] + (expectedMethod ? ` (expected ${expectedMethod})` : '') : 'no "Sending action bars with the" line in the server log')
+
   // hex: run.sh starts the health message with &#4fdfc4.
   // The code must not show as text. That is what the bot gets if the plugin does not translate it.
   // Before 1.16, some Spigot versions send action bars as legacy text, where \u00a7b is aqua.
@@ -330,6 +344,26 @@ async function main () {
   bot1.attack(cow)
   const unexpected = await waitForBar(bot1, barSince, /Cow:/, 3000)
   record('toggle', !!disabled && !unexpected, disabled ? (unexpected ? 'still got: ' + unexpected : 'disabled and no action bar after hit') : 'no disable message')
+
+  // toggle-message: Bot1 is still toggled off.
+  editConfig([["Toggle Message: ''", "Toggle Message: 'AH off for {name}'"], ['Show On Look: false', 'Show On Look: true']])
+  await command('actionhealth reload')
+  await sleep(1000)
+  const t = bot1.entity.position
+  since = Date.now()
+  await cowInFront(bot1, Math.floor(t.x) + 0.5, Math.floor(t.y), Math.floor(t.z) + 0.5)
+  const toggleBar = await waitForBar(bot1, since, /AH off for Bot1/, 5000)
+  // Yaw 180 faces north, away from the cows.
+  await command(`tp Bot1 ${Math.floor(t.x) + 0.5} ${Math.floor(t.y)} ${Math.floor(t.z) + 0.5} 180 0`)
+  await sleep(1000)
+  const quietSince = Date.now()
+  await sleep(2500)
+  const afterAway = bot1.actionBars.filter((b) => b.time >= quietSince && /AH off/.test(b.text)).length
+  record('toggle-message', !!toggleBar && afterAway === 0,
+    !toggleBar ? 'no toggle message while looking at a cow, last: ' + lastBars(bot1)
+      : afterAway ? `${afterAway} toggle messages after looking away` : 'toggle message only while looking at a cow')
+  editConfig([["Toggle Message: 'AH off for {name}'", "Toggle Message: ''"], ['Show On Look: true', 'Show On Look: false']])
+  await command('actionhealth reload')
   bot1.chat('/actionhealth toggle')
   await waitFor(() => bot1.chatLines.find((line) => line.includes('ActionHealth has been enabled')), 10000)
 
@@ -346,7 +380,11 @@ async function main () {
   const target = await waitFor(() => bot1.players.Bot2 && bot1.players.Bot2.entity, 10000)
   if (!target) throw new Error('Bot1 can not see Bot2')
   bot1.attack(target)
-  await sleep(700)
+  await sleep(1500)
+  // action-damage: the ANY message has the health icons but not the "health/max" of the health message.
+  const hitBars = bot1.actionBars.filter((b) => b.time >= since && /Bot2:/.test(b.text)).map((b) => b.text)
+  record('action-damage', hitBars.length === 1 && !/Bot2: [0-9]+\/20/.test(hitBars[0]),
+    `${hitBars.length} messages for one hit: ${JSON.stringify(hitBars)}`)
   bot1.attack(target)
   const tagBar = await waitForBar(bot1, since, /Bot2:/, 5000)
 
@@ -371,6 +409,9 @@ async function main () {
   }
   const held = bot2.heldItem ? bot2.heldItem.name : 'nothing'
   record('consume', !!bar, bar ? `${bar} (damage event: ${tagBar})` : `no CONSUME action bar (Bot2 holds ${held}), last: ` + lastBars(bot1))
+  await sleep(1000)
+  const consumed = bot1.actionBars.filter((b) => b.time >= since && /Bot2 consumed regen potion/.test(b.text)).length
+  record('action-tags', consumed === 1, `${consumed} CONSUME messages after two hits on Bot2`)
   bot2.quit()
 
   // display-time
@@ -404,7 +445,7 @@ async function main () {
 }
 
 const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 2], modelengine: [modelEngine, 5] }
-const [run, expected] = modes[process.env.MODE] || [main, 10]
+const [run, expected] = modes[process.env.MODE] || [main, 14]
 run()
   .catch((error) => record('setup', false, error.stack))
   .finally(() => {
