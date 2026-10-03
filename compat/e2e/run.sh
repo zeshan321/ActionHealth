@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Runs the bot test against one Spigot server in Docker.
 #
-#   [MODE=worldguard|placeholderapi|modelengine] run.sh <spigot.jar> <mc-version> <java-major> <plugin.jar> [client-version] [extra-plugin.jar ...]
+#   [MODE=worldguard|placeholderapi|modelengine] [ACTIONBAR=spigot|adventure|paper|packet] \
+#     run.sh <spigot.jar> <mc-version> <java-major> <plugin.jar> [client-version] [extra-plugin.jar ...]
 #
 # Needs only Docker. The client version defaults to the server version. For versions
 # mineflayer does not support yet, pass an older client version plus the ViaVersion and
 # ViaBackwards jars. MODE=worldguard runs the region test (pass the WorldGuard and WorldEdit
 # jars as extra plugins). MODE=placeholderapi runs the placeholder test (pass the
 # PlaceholderAPI jar). MODE=modelengine runs the custom model test (pass the ModelEngine jar).
+# ACTIONBAR makes the plugin start with that action bar method (the system property
+# actionhealth.actionbar), to test a method that the server would not use first.
 #
 # Exit code 0 means the server started, the plugin enabled, every scenario passed and the
 # log has no ActionHealth errors. Server files: compat/e2e/runs/<server>-<plugin>-<time>/.
@@ -25,7 +28,7 @@ DIR=$(cd "$(dirname "$0")" && pwd)
 docker image inspect "ah-jdk$JAVA" > /dev/null 2>&1 || docker build -q --build-arg "JAVA=$JAVA" -t "ah-jdk$JAVA" "$DIR" > /dev/null
 # A new folder for every run. Reusing a folder that the host just cleaned can show stale files
 # inside the Docker VM.
-RUN="$DIR/runs/$(basename "$SPIGOT" .jar)-$(basename "$PLUGIN" .jar)${MODE:+-$MODE}-$(date +%Y%m%d-%H%M%S)-$$"
+RUN="$DIR/runs/$(basename "$SPIGOT" .jar)-$(basename "$PLUGIN" .jar)${MODE:+-$MODE}${ACTIONBAR:+-$ACTIONBAR}-$(date +%Y%m%d-%H%M%S)-$$"
 NAME="ah-e2e-$MC-$$"
 mkdir -p "$RUN/plugins/ActionHealth"
 cp "$PLUGIN" "$RUN/plugins/"
@@ -88,9 +91,10 @@ if [ "${MODE:-}" = modelengine ]; then
   cp "$DIR/fixtures/bigmob.bbmodel" "$RUN/plugins/ModelEngine/blueprints/"
 fi
 
-docker run -d --name "$NAME" \
+PROPERTY=${ACTIONBAR:+-Dactionhealth.actionbar=$ACTIONBAR}
+docker run -d --name "$NAME" -e PROPERTY="$PROPERTY" \
   -v "$RUN:/srv" -v "$SPIGOT:/server.jar:ro" -w /srv "ah-jdk$JAVA" \
-  sh -c 'tail -n 0 -F console.in | java -Xms512m -Xmx1536m -DIReallyKnowWhatIAmDoingISwear -jar /server.jar nogui' > /dev/null
+  sh -c 'tail -n 0 -F console.in | java -Xms512m -Xmx1536m $PROPERTY -DIReallyKnowWhatIAmDoingISwear -jar /server.jar nogui' > /dev/null
 
 cleanup() { docker rm -f "$NAME" > /dev/null 2>&1; }
 trap cleanup EXIT
@@ -109,7 +113,7 @@ grep -E "Enabling ActionHealth|Error occurred while enabling ActionHealth" "$RUN
 
 # The bots run in a Node container that shares the server's network namespace, so they
 # connect to localhost without Docker port mapping.
-docker run --rm --network "container:$NAME" -e VIA=$VIA -e MODE="${MODE:-}" \
+docker run --rm --network "container:$NAME" -e VIA=$VIA -e MODE="${MODE:-}" -e ACTIONBAR="${ACTIONBAR:-}" \
   -v "$DIR:$DIR:ro" -v "$RUN:$RUN" -w "$DIR" node:22-slim \
   node "$DIR/test.js" 127.0.0.1 25565 "$CLIENT" "$MC" "$RUN" || status=1
 

@@ -19,28 +19,74 @@ import java.util.logging.Logger;
  * Methods are tried in this order and the first one that exists is used:
  * <ol>
  *     <li>Spigot API {@code Player.Spigot#sendMessage(ChatMessageType, BaseComponent...)} (1.9.2 and later).</li>
+ *     <li>Adventure API {@code Audience#sendActionBar(Component)} (Paper 1.16.5 and later). Paper deprecated
+ *     the BungeeCord chat API that the Spigot method uses, so this method is ready if Paper removes it.</li>
  *     <li>Paper API {@code Player#sendActionBar(String)}.</li>
  *     <li>A chat packet sent through NMS reflection (1.8 to 1.9, before the Spigot API existed).</li>
  * </ol>
  * If a method fails before it has ever worked, it is logged and the next method is used.
  * Later failures (for example another plugin throwing for one player) are logged at most
  * once a minute and the method stays in use.
+ * <p>
+ * The tests start with a later method through the system property {@value #METHOD_PROPERTY}
+ * (spigot, adventure, paper or packet), to check a method that the server would not use first.
  */
 public class ActionBar {
 
+    static final String METHOD_PROPERTY = "actionhealth.actionbar";
+    private static final String[] METHODS = {"spigot", "adventure", "paper", "packet"};
+
     private final Logger logger;
+    // Set once a method has worked. Volatile, so Folia threads can send without the lock.
+    private volatile Sender working;
     private Sender sender;
-    private boolean senderWorked;
     private int nextMethod;
     private boolean noMethodLogged;
-    private long lastFailureLog;
+    private volatile long lastFailureLog;
 
     public ActionBar(Logger logger) {
         this.logger = logger;
+        String method = System.getProperty(METHOD_PROPERTY);
+        if (method != null) {
+            int index = java.util.Arrays.asList(METHODS).indexOf(method.toLowerCase(java.util.Locale.ROOT));
+            if (index >= 0) {
+                nextMethod = index;
+            } else {
+                logger.warning(METHOD_PROPERTY + "=" + method + " is not a method. Use one of " + String.join(", ", METHODS) + ".");
+            }
+        }
+    }
+
+    public void send(Player player, String message) {
+        Sender current = working;
+        if (current == null) {
+            findAndSend(player, message);
+            return;
+        }
+
+        try {
+            current.send(player, message);
+        } catch (Throwable e) {
+            logFailure(player, e);
+        }
+    }
+
+    private void logFailure(Player player, Throwable e) {
+        Throwable cause = e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+        long now = System.currentTimeMillis();
+        if (now - lastFailureLog > 60000) {
+            lastFailureLog = now;
+            logger.log(Level.WARNING, "Could not send action bar to " + player.getName(), cause);
+        }
     }
 
     // Synchronized, because Folia sends messages from many threads and the first send picks the method.
-    public synchronized void send(Player player, String message) {
+    private synchronized void findAndSend(Player player, String message) {
+        if (working != null) {
+            send(player, message);
+            return;
+        }
+
         while (true) {
             if (sender == null) {
                 sender = findSender(player);
@@ -56,19 +102,11 @@ public class ActionBar {
 
             try {
                 sender.send(player, message);
-                senderWorked = true;
+                working = sender;
+                logger.info("Sending action bars with the " + sender.name() + ".");
                 return;
             } catch (Throwable e) {
                 Throwable cause = e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
-                if (senderWorked) {
-                    long now = System.currentTimeMillis();
-                    if (now - lastFailureLog > 60000) {
-                        lastFailureLog = now;
-                        logger.log(Level.WARNING, "Could not send action bar to " + player.getName(), cause);
-                    }
-                    return;
-                }
-
                 logger.log(Level.WARNING, "Action bar method '" + sender.name() + "' does not work here, trying the next one", cause);
                 sender = null;
             }
@@ -76,16 +114,19 @@ public class ActionBar {
     }
 
     private Sender findSender(Player player) {
-        while (nextMethod < 3) {
+        while (nextMethod < METHODS.length) {
             Sender found = null;
             switch (nextMethod++) {
                 case 0:
                     found = SpigotSender.create();
                     break;
                 case 1:
-                    found = PaperSender.create();
+                    found = AdventureSender.create(player);
                     break;
                 case 2:
+                    found = PaperSender.create();
+                    break;
+                case 3:
                     found = PacketSender.create(player);
                     break;
             }
@@ -128,6 +169,54 @@ public class ActionBar {
         @Override
         public void send(Player player, String message) throws Exception {
             sendMessage.invoke(player.spigot(), actionBarType, TextComponent.fromLegacyText(message));
+        }
+    }
+
+    /**
+     * Paper's own chat API. The legacy text keeps its colors, including the Bukkit format for hex
+     * colors that {@link com.zeshanaslam.actionhealth.utils.Colors} writes.
+     */
+    private static class AdventureSender implements Sender {
+        private final Object serializer;
+        private final Method deserialize;
+        private final Method sendActionBar;
+
+        private AdventureSender(Object serializer, Method deserialize, Method sendActionBar) {
+            this.serializer = serializer;
+            this.deserialize = deserialize;
+            this.sendActionBar = sendActionBar;
+        }
+
+        static Sender create(Player player) {
+            Class<?> audience = Reflect.findClass("net.kyori.adventure.audience.Audience");
+            Class<?> component = Reflect.findClass("net.kyori.adventure.text.Component");
+            Class<?> legacy = Reflect.findClass("net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer");
+            Class<?> builder = Reflect.findClass("net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer$Builder");
+            // Another plugin can include its own copy of Adventure. Only the server's copy works with its players.
+            if (audience == null || component == null || legacy == null || builder == null || !audience.isInstance(player)) return null;
+
+            try {
+                Object build = legacy.getMethod("builder").invoke(null);
+                build = builder.getMethod("character", char.class).invoke(build, '\u00A7');
+                build = builder.getMethod("hexColors").invoke(build);
+                build = builder.getMethod("useUnusualXRepeatedCharacterHexFormat").invoke(build);
+                Object serializer = builder.getMethod("build").invoke(build);
+                Method deserialize = legacy.getMethod("deserialize", String.class);
+                Method sendActionBar = audience.getMethod("sendActionBar", component);
+                return new AdventureSender(serializer, deserialize, sendActionBar);
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+                return null;
+            }
+        }
+
+        @Override
+        public String name() {
+            return "Adventure API";
+        }
+
+        @Override
+        public void send(Player player, String message) throws Exception {
+            sendActionBar.invoke(player, deserialize.invoke(serializer, message));
         }
     }
 

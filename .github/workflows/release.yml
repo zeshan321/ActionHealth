@@ -13,9 +13,10 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    # A fixed image, so a new Ubuntu version can not change the test servers without a commit.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The checkout has only the commit. The tag message is in the tag object.
       - name: Fetch the tag
@@ -29,7 +30,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
@@ -39,7 +40,7 @@ jobs:
         run: ./gradlew clean build
 
       - name: Cache spigot-api jars
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: compat/.cache
           key: spigot-api-${{ github.run_id }}

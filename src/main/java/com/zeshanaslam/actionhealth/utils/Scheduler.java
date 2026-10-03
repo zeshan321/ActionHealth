@@ -25,6 +25,9 @@ public final class Scheduler {
             Reflect.findClass("io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler"),
             "runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class) : null;
 
+    private static final Method IS_OWNED_BY_CURRENT_REGION = FOLIA
+            ? Reflect.findMethod(Bukkit.class, "isOwnedByCurrentRegion", Entity.class) : null;
+
     private static final Method GET_ENTITY_SCHEDULER = FOLIA ? Reflect.findMethod(Entity.class, "getScheduler") : null;
     private static final Class<?> ENTITY_SCHEDULER = FOLIA
             ? Reflect.findClass("io.papermc.paper.threadedregions.scheduler.EntityScheduler") : null;
@@ -71,11 +74,12 @@ public final class Scheduler {
 
     /**
      * Runs the task on the thread that owns the entity. Outside Folia, callers are already on the
-     * main thread, so the task runs now. On Folia, it runs soon on the region thread of the entity.
-     * If the entity is removed before that, the task does not run.
+     * main thread, so the task runs now. On Folia, the task runs now if the current thread owns the
+     * entity. Otherwise it runs soon on the region thread of the entity. If the entity is removed
+     * before that, the task does not run.
      */
     public static void runFor(Plugin plugin, Entity entity, Runnable task) {
-        if (!FOLIA) {
+        if (!FOLIA || isOwnedByCurrentThread(entity)) {
             task.run();
             return;
         }
@@ -103,6 +107,15 @@ public final class Scheduler {
             return wrap(ENTITY_RUN_DELAYED.invoke(GET_ENTITY_SCHEDULER.invoke(entity), plugin, consumer, null, delay));
         } catch (ReflectiveOperationException | RuntimeException e) {
             throw new IllegalStateException("Could not schedule a task on Folia", e);
+        }
+    }
+
+    private static boolean isOwnedByCurrentThread(Entity entity) {
+        if (IS_OWNED_BY_CURRENT_REGION == null) return false;
+        try {
+            return (boolean) IS_OWNED_BY_CURRENT_REGION.invoke(null, entity);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return false;
         }
     }
 

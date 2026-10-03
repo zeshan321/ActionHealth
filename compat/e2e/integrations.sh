@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Runs the tests for optional plugins. Needs the Spigot jars from matrix.sh.
-#   - WorldGuard region test on one server per WorldGuardWrapper implementation:
-#     WorldGuard 6.1 (legacy), 6.2 (v6) and 7 (v7).
+#   - WorldGuard region test on WorldGuard 6.1, 6.2 and 7 (two versions). WorldGuard 6 and 7
+#     have different APIs.
 #   - PlaceholderAPI test on the oldest and newest versions.
 #   - ModelEngine test on 1.20.4, if a ModelEngine jar is in compat/.cache/plugins.
 #   - The main test on Paper 1.8.8, 1.20.6, 1.21.11 and 26.3. Paper rewrites plugin
 #     reflection on 1.20.5+, which once broke a getMethod call that Spigot accepts.
+#   - The main test on Paper 1.16.5, started with the Adventure action bar method. 1.16.5 is the
+#     oldest Paper version with Adventure.
 #   - The main test on Folia 1.21.11 and 26.2. Folia has a thread for each region of the world
 #     and no main thread.
 #
@@ -74,6 +76,7 @@ check_fill paper 1.8.8 8 1.8.8
 check_fill paper 1.20.6 21 1.20.6
 check_fill paper 1.21.11 21 1.21.11
 check_fill paper 26.3 25 26.1 "$VIA_DIR/ViaVersion-$VIA.jar" "$VIA_DIR/ViaBackwards-$VIA.jar"
+ACTIONBAR=adventure check_run "Paper 1.16.5 (Adventure)" paper-1.16.5-adventure "$(fill paper 1.16.5)" 1.16.5 8 "$PLUGIN" 1.16.5
 check_fill folia 1.21.11 21 1.21.11
 check_fill folia 26.2 25 26.1 "$VIA_DIR/ViaVersion-$VIA.jar" "$VIA_DIR/ViaBackwards-$VIA.jar"
 exit $failed

@@ -11,8 +11,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffectType;
-import org.codemc.worldguardwrapper.WorldGuardWrapper;
-import org.codemc.worldguardwrapper.region.IWrappedRegion;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,6 +27,7 @@ public class HealthUtil {
     private Main plugin;
     private final ActionBar actionBar;
     private final PlaceholderSupport placeholderSupport = new PlaceholderSupport();
+    private final WorldGuardSupport worldGuard;
     // Thread safe, because Folia runs events and entity tasks on many threads.
     private final Map<UUID, Scheduler.Task> clearTasks = new ConcurrentHashMap<>();
     private final Map<UUID, Sent> lastSent = new ConcurrentHashMap<>();
@@ -45,6 +44,7 @@ public class HealthUtil {
     public HealthUtil(Main plugin) {
         this.plugin = plugin;
         this.actionBar = new ActionBar(plugin.getLogger());
+        this.worldGuard = new WorldGuardSupport(plugin.getLogger());
     }
 
     public void sendHealth(Player receiver, LivingEntity entity, double health) {
@@ -353,8 +353,8 @@ public class HealthUtil {
             return false;
         }
 
-        for (IWrappedRegion region : WorldGuardWrapper.getInstance().getRegions(location)) {
-            if (plugin.configStore.regions.contains(region.getId())) {
+        for (String region : worldGuard.getRegionIds(location)) {
+            if (plugin.configStore.regions.contains(region)) {
                 return true;
             }
         }
@@ -362,7 +362,27 @@ public class HealthUtil {
         return false;
     }
 
+    /**
+     * Returns true if the player may see the health of the entity. If the player turned ActionHealth
+     * off, sends the toggle message and returns false.
+     */
     public boolean matchesRequirements(Player player, Entity damaged) {
+        if (!matchesFilters(player, damaged))
+            return false;
+
+        if (plugin.toggles.isToggled(player.getUniqueId())) {
+            sendToggleMessage(player, false);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns true if the config lets the player see the health of the entity. Does not check
+     * whether the player turned ActionHealth off.
+     */
+    public boolean matchesFilters(Player player, Entity damaged) {
         if (damaged.getType().name().equals("ARMOR_STAND"))
             return false;
 
@@ -392,20 +412,19 @@ public class HealthUtil {
         if (plugin.configStore.usePerms && !player.hasPermission("ActionHealth.Health"))
             return false;
 
-        if (player.getUniqueId().equals(damaged.getUniqueId()))
-            return false;
-
-        if (plugin.toggles.isToggled(player.getUniqueId())) {
-            sendMessage(player);
-            return false;
-        }
-
-        return true;
+        return !player.getUniqueId().equals(damaged.getUniqueId());
     }
 
-    private void sendMessage(Player player) {
-        if (plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.equals("")) {
-            plugin.healthUtil.sendActionBar(player, replacePlaceholders(plugin.configStore.toggleMessage, "name", player.getName()));
+    public boolean hasToggleMessage() {
+        return plugin.configStore.toggleMessage != null && !plugin.configStore.toggleMessage.isEmpty();
+    }
+
+    /**
+     * Sends the "Toggle Message" to a player who turned ActionHealth off, if the config has one.
+     */
+    public void sendToggleMessage(Player player, boolean repeated) {
+        if (hasToggleMessage()) {
+            sendActionBar(player, replacePlaceholders(plugin.configStore.toggleMessage, "name", player.getName()), repeated);
         }
     }
 

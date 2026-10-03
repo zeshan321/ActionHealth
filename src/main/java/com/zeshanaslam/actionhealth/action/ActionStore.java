@@ -3,6 +3,7 @@ package com.zeshanaslam.actionhealth.action;
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.data.Action;
 import com.zeshanaslam.actionhealth.action.data.Tagged;
+import com.zeshanaslam.actionhealth.utils.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Logger;
 
 public class ActionStore {
 
@@ -30,13 +32,17 @@ public class ActionStore {
     public boolean isUsingAnyDamageCause = false;
 
     public ActionStore(Main main) {
+        this(main, main.getConfig(), main.getLogger());
+    }
+
+    ActionStore(Main main, ConfigurationSection config, Logger logger) {
         this.main = main;
-        enabled = main.getConfig().getBoolean("Action.Enabled");
-        tagLength = main.getConfig().getInt("Action.TagLength");
-        tagAmount = main.getConfig().getInt("Action.TagAmount");
+        enabled = config.getBoolean("Action.Enabled");
+        tagLength = config.getInt("Action.TagLength");
+        tagAmount = config.getInt("Action.TagAmount");
         events = new HashMap<>();
 
-        ConfigurationSection eventSection = main.getConfig().getConfigurationSection("Action.Events");
+        ConfigurationSection eventSection = config.getConfigurationSection("Action.Events");
         if (eventSection == null) return;
 
         for (String action : eventSection.getKeys(false)) {
@@ -44,20 +50,21 @@ public class ActionStore {
             try {
                 actionType = ActionType.valueOf(action.toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
-                main.getLogger().warning("Action.Events: '" + action + "' was skipped. Use CONSUME, RIGHTCLICK, LEFTCLICK, SWAP or DAMAGE.");
+                logger.warning("Action.Events: '" + action + "' was skipped. Use CONSUME, RIGHTCLICK, LEFTCLICK, SWAP or DAMAGE.");
                 continue;
             }
 
             ConfigurationSection typeSection = eventSection.getConfigurationSection(action);
             if (typeSection == null) {
-                main.getLogger().warning("Action.Events: '" + action + "' was skipped. It needs a list of items or damage causes with a message.");
+                logger.warning("Action.Events: '" + action + "' was skipped. It needs a list of items or damage causes with a message.");
                 continue;
             }
 
             for (String type : typeSection.getKeys(false)) {
                 String output = typeSection.getString(type);
 
-                if (actionType == ActionType.DAMAGE && output != null && output.equalsIgnoreCase("any")) {
+                // ANY is the damage cause, not the message: 'ANY: <message>'.
+                if (actionType == ActionType.DAMAGE && type.equalsIgnoreCase("any")) {
                     isUsingAnyDamageCause = true;
                 }
 
@@ -79,13 +86,29 @@ public class ActionStore {
 
         tagged.compute(damager, (key, taggedList) -> {
             if (taggedList == null) taggedList = new CopyOnWriteArrayList<>();
-            // Remove oldest if > tag amount to add new player
-            if (tagAmount != -1 && taggedList.size() >= tagAmount && !taggedList.isEmpty())
+            // One tag for each target. A new hit on the same target only starts its time again.
+            taggedList.removeIf(tag -> tag.damaged.equals(damaged));
+            // Remove the oldest tags to make room for the new target.
+            while (tagAmount != -1 && !taggedList.isEmpty() && taggedList.size() >= tagAmount)
                 taggedList.remove(0);
 
             taggedList.add(new Tagged(damager, damaged, System.currentTimeMillis()));
             return taggedList;
         });
+    }
+
+    /**
+     * Removes the tags that are older than "Action.TagLength" seconds.
+     */
+    public void expire(long nowMillis) {
+        long now = nowMillis / 1000;
+        for (UUID damager : tagged.keySet()) {
+            // Atomic for each player, so a tag that is added at the same time is not lost.
+            tagged.computeIfPresent(damager, (key, list) -> {
+                list.removeIf(tag -> (tag.timestamp / 1000) + tagLength - now <= 0);
+                return list.isEmpty() ? null : list;
+            });
+        }
     }
 
     public void remove(UUID remove) {
@@ -94,6 +117,8 @@ public class ActionStore {
     }
 
     private void sendMessage(LivingEntity entity, String message, Optional<Double> health) {
+        // Read on the thread of the entity, before the message moves to the thread of each player.
+        double value = health.orElseGet(entity::getHealth);
         for (List<Tagged> taggedList : tagged.values()) {
             for (Tagged tagged : taggedList) {
                 if (tagged.damaged.equals(entity.getUniqueId())) {
@@ -101,10 +126,17 @@ public class ActionStore {
                     if (damager == null)
                         continue;
 
-                    String output = main.healthUtil.getOutput(health.orElseGet(entity::getHealth), message, damager, entity);
+                    // On Folia, the player can be in a region that another thread owns.
+                    Scheduler.runFor(main, damager, () -> {
+                        // The same rules as the health message: worlds, regions, permissions and the toggle.
+                        if (!main.healthUtil.matchesFilters(damager, entity) || main.toggles.isToggled(damager.getUniqueId()))
+                            return;
 
-                    if (output != null)
-                        main.healthUtil.sendActionBar(damager, output);
+                        String output = main.healthUtil.getOutput(value, message, damager, entity);
+
+                        if (output != null)
+                            main.healthUtil.sendActionBar(damager, output);
+                    });
                 }
             }
         }
@@ -115,14 +147,14 @@ public class ActionStore {
     }
 
     public void triggerAction(ActionType actionType, LivingEntity entity, String name, Optional<Double> health) {
-        if (main.configStore.actionStore.events.containsKey(actionType)) {
-            List<Action> actionList = new ArrayList<>(main.configStore.actionStore.events.get(actionType));
+        if (events.containsKey(actionType)) {
+            List<Action> actionList = new ArrayList<>(events.get(actionType));
             Optional<Action> actionOptional = actionList.stream()
                     .filter(a -> a.material.equalsIgnoreCase(name)).findAny();
 
             if (actionOptional.isPresent()) {
                 Action action = actionOptional.get();
-                main.configStore.actionStore.sendMessage(entity, action.output, health);
+                sendMessage(entity, action.output, health);
             }
         }
     }
