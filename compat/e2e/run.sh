@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Runs the bot test against one Spigot server in Docker.
 #
-#   [MODE=worldguard|placeholderapi] run.sh <spigot.jar> <mc-version> <java-major> <plugin.jar> [client-version] [extra-plugin.jar ...]
+#   [MODE=worldguard|placeholderapi|modelengine] run.sh <spigot.jar> <mc-version> <java-major> <plugin.jar> [client-version] [extra-plugin.jar ...]
 #
 # Needs only Docker. The client version defaults to the server version. For versions
 # mineflayer does not support yet, pass an older client version plus the ViaVersion and
 # ViaBackwards jars. MODE=worldguard runs the region test (pass the WorldGuard and WorldEdit
 # jars as extra plugins). MODE=placeholderapi runs the placeholder test (pass the
-# PlaceholderAPI jar).
+# PlaceholderAPI jar). MODE=modelengine runs the custom model test (pass the ModelEngine jar).
 #
 # Exit code 0 means the server started, the plugin enabled, every scenario passed and the
 # log has no ActionHealth errors. Server files: compat/e2e/runs/<server>-<plugin>-<time>/.
@@ -76,6 +76,12 @@ regions:
         type: cuboid
         priority: 0
 REGIONS
+fi
+
+# MODE=modelengine: a test model with a hitbox 3 blocks wide and 4 blocks high.
+if [ "${MODE:-}" = modelengine ]; then
+  mkdir -p "$RUN/plugins/ModelEngine/blueprints"
+  cp "$DIR/fixtures/bigmob.bbmodel" "$RUN/plugins/ModelEngine/blueprints/"
 fi
 
 docker run -d --name "$NAME" \

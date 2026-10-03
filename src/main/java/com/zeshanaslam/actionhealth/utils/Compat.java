@@ -1,9 +1,11 @@
 package com.zeshanaslam.actionhealth.utils;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -31,6 +33,11 @@ public final class Compat {
     private static final Method GET_BASE_POTION_TYPE = Reflect.findMethod(PotionMeta.class, "getBasePotionType");
     private static final Method GET_BASE_POTION_DATA = Reflect.findMethod(PotionMeta.class, "getBasePotionData");
     private static final Method POTION_FROM_ITEM = Reflect.findMethod(Reflect.findClass("org.bukkit.potion.Potion"), "fromItemStack", ItemStack.class);
+
+    // Entity hitboxes (1.13.2+). Plugins such as ModelEngine resize the hitbox to fit a custom model.
+    private static final Method GET_BOUNDING_BOX = Reflect.findMethod(Entity.class, "getBoundingBox");
+    private static final Method RAY_TRACE = GET_BOUNDING_BOX == null ? null
+            : Reflect.findMethod(GET_BOUNDING_BOX.getReturnType(), "rayTrace", Vector.class, Vector.class, double.class);
 
     private Compat() {
     }
@@ -87,6 +94,20 @@ public final class Compat {
         }
 
         return 0;
+    }
+
+    /**
+     * Returns true if a ray hits the hitbox of an entity within the distance.
+     * Returns false if it misses, or if the server has no hitbox API (before 1.13.2).
+     */
+    public static boolean rayHitsHitbox(Entity entity, Vector start, Vector direction, double distance) {
+        if (RAY_TRACE == null) return false;
+
+        try {
+            return RAY_TRACE.invoke(GET_BOUNDING_BOX.invoke(entity), start, direction, distance) != null;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return false;
+        }
     }
 
     /**

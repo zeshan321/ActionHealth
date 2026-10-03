@@ -1,47 +1,88 @@
 # ActionHealth
-ActionHealth is a Minecraft plugin that utilizes the action bar to display entity health.
 
-Spigot page: [Click Here](https://www.spigotmc.org/resources/action-bar-health.2661/)
+A Minecraft plugin that shows the health of players and mobs in the action bar, when you hit them or look at them.
 
-# Supported versions
-One jar runs on every Spigot version from 1.8 to the current release (26.3 at the time of writing), on any Java version the server uses (Java 8 or greater). Forks of Spigot, such as Paper, work too.
+[Spigot page](https://www.spigotmc.org/resources/action-bar-health.2661/) | [Download](https://github.com/zeshan321/ActionHealth/releases/latest) | [Default config](src/main/resources/config.yml) | [Report a bug](https://github.com/zeshan321/ActionHealth/issues)
 
-ActionHealth does not check the server version. It detects which API is available, so new Minecraft versions do not need a new ActionHealth release. See [compat/README.md](compat/README.md) for how this is tested.
+![ActionHealth](http://i.imgur.com/QBMd4FM.jpg)
 
-# Dependencies
-**Required**
-- Nothing besides Spigot (or a fork) 1.8 or greater
+## Supported versions
 
-**Optional**
-- For region disable option:
-  - WorldGuard
-  - WorldEdit
-  - ActionHealth is compatible with both 6 and 7
-- Placeholders support:
-  - PlaceholderAPI
-  - MVdWPlaceholderAPI
-- Supports MythicMobs (using internal name) for blacklisting
-- [LanguageUtils](https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/) for client translations
+One jar runs on Spigot 1.8 to 26.3, and on forks such as Paper. It runs on Java 8 or newer, so use the Java version that your server already runs.
 
-# Config
-ActionHealth is a very configurable plugin. You can almost change every aspect in the config, including style.
+ActionHealth does not check the server version. It checks which features the server has. New Minecraft versions should not need an update. Version 3.7.1 was tested on 27 Spigot versions, with bots that read the action bar. [How the tests work](compat/README.md).
 
-- Colors use `&` codes or hex colors as `&#RRGGBB`. Servers before 1.16 show the closest legacy color.
-- The health icons can use PlaceholderAPI placeholders, for example font images.
-- `Absorption Icon` adds one icon per heart of absorption. `{absorption}` shows the absorption health.
-- `Display Time` sets how long the action bar shows, in ticks.
+## Features
 
-Default config: [Click Here](https://github.com/zeshan321/ActionHealth/blob/master/src/main/resources/config.yml)
+- **Health on hit.** When you hit a player or a mob, its health shows in your action bar. Arrows and other projectiles count too.
+- **Health on look.** When you look at an entity, its health shows. On 1.13.2+, any part of the hitbox counts, so large mobs and ModelEngine models work.
+- **Styles.** Show hearts, bars, lines or numbers. Colors can be `&` codes or hex colors such as `&#4fdfc4`. Servers before 1.16 show the closest legacy color.
+- **Absorption.** Absorption health shows as extra icons after the health icons, or as a number with `{absorption}`.
+- **Action messages.** See when an enemy that you fought drinks a potion, eats a golden apple or uses an ender pearl. This is off by default.
+- **Toggle.** Players can turn ActionHealth off for themselves. The choice can stay after they log out.
+- **Filters.** Turn ActionHealth off in worlds or WorldGuard regions, or for players, mobs, NPCs, invisible entities and spectators. Use a blacklist or a whitelist of names.
+- **Translations.** Rename mobs in the config, or show mob names in each player's client language.
 
-# Translations
-[LanguageUtils](https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/) is supported to get the localized name of an entity but if you prefer using your own custom translations, you can use the built in system.
+## Install
 
-A list of the community made translations: [Click Here](https://github.com/zeshan321/ActionHealth/wiki/Community-Translations)
+1. Download the jar from the [latest release](https://github.com/zeshan321/ActionHealth/releases/latest) or the [Spigot page](https://www.spigotmc.org/resources/action-bar-health.2661/).
+2. Put the jar in the `plugins` folder of your server.
+3. Restart the server.
+4. Edit `plugins/ActionHealth/config.yml`, then run `/actionhealth reload`.
 
-# Compiling
-To compile ActionHealth, you need **JDK 17** or newer and an internet connection. Then, clone this repo, run `./gradlew clean build` and get your jar from `build/libs/ActionHealth-VERSION-all.jar`. The jar targets Java 8, so it runs on every server.
+## Commands and permissions
 
-# More info
-Custom styles, screenshots, command information and more can be found on the spigot page.
+| Command or permission | What it does |
+| --- | --- |
+| `/actionhealth reload` | Reloads the config. Needs `ActionHealth.Reload`. |
+| `/actionhealth toggle` | Turns the health display on or off for you. |
+| `ActionHealth.Health` | Lets a player see health messages. Applies only when `Use Permissions` is `true`. |
 
-Spigot page: [Click Here](https://www.spigotmc.org/resources/action-bar-health.2661/)
+## Placeholders
+
+Use these in the health message:
+
+| Placeholder | Shows |
+| --- | --- |
+| `{name}` | The name of the player or mob |
+| `{displayname}` | The display name or custom name |
+| `{health}` and `{maxhealth}` | Current and maximum health |
+| `{percenthealth}` | Health left as a percentage |
+| `{absorption}` | Absorption health |
+| `{usestyle}` | The health icons from the config |
+| `{opponentlastdamage}` | The last damage that the target took |
+
+If another plugin replaces a placeholder first, add `ah` in front, for example `{ahhealth}`.
+
+PlaceholderAPI placeholders work in the message and in the health icons. They use the attacking player. To use the attacked player, add `ATTACKEDPLAYER_`, for example `%ATTACKEDPLAYER_player_exp%`.
+
+## Optional plugins
+
+ActionHealth needs no other plugins. It uses these plugins when they are installed:
+
+| Plugin | What ActionHealth does with it |
+| --- | --- |
+| WorldGuard 6 or 7, with WorldEdit | Turns ActionHealth off in the regions from `Disabled regions` |
+| PlaceholderAPI, MVdWPlaceholderAPI | Fills in their placeholders in the message |
+| MythicMobs 4 or 5 | Blacklists or whitelists mobs by their internal name |
+| ModelEngine | Shows health when you look at or hit a model. Tested with ModelEngine R3. |
+| mcMMO | Shows the correct mob name when mcMMO health bars are on |
+| [LanguageUtils](https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/) | Shows mob names in each player's client language |
+
+## Translations
+
+Rename mobs with the `Name Change` option in the config. The [translations](translations) folder has community translations for 12 languages. You can share yours with a pull request.
+
+## Build from source
+
+You need JDK 17 or newer.
+
+```sh
+./gradlew clean build
+```
+
+The jar is `build/libs/ActionHealth-<version>-all.jar`. It targets Java 8, so it runs on every server. To test a change on real servers, see [compat/README.md](compat/README.md).
+
+## License
+
+[MIT](LICENSE)

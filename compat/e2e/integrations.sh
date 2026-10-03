@@ -3,6 +3,7 @@
 #   - WorldGuard region test on one server per WorldGuardWrapper implementation:
 #     WorldGuard 6.1 (legacy), 6.2 (v6) and 7 (v7).
 #   - PlaceholderAPI test on the oldest and newest versions.
+#   - ModelEngine test on 1.20.4, if a ModelEngine jar is in compat/.cache/plugins.
 #   - The main test on Paper 1.8.8, 1.20.6, 1.21.11 and 26.3. Paper rewrites plugin
 #     reflection on 1.20.5+, which once broke a getMethod call that Spigot accepts.
 #
@@ -54,6 +55,15 @@ done
 PAPI=$(fetch "$MODRINTH/lKEzGugV/versions/pIvQcXW8/PlaceholderAPI-2.12.3.jar")
 check placeholderapi 1.8.8 8 1.8.8 "$(basename "$PAPI")" "$PAPI"
 check placeholderapi 26.3 25 26.1 "$(basename "$PAPI")" "$PAPI" "$VIA_DIR/ViaVersion-5.12.0.jar" "$VIA_DIR/ViaBackwards-5.12.0.jar"
+
+# ModelEngine has no public download URL. To run this test, download the free "Legacy Model Engine
+# Demo" (R3, 1.16.5-1.20.4) from https://www.spigotmc.org/resources/106521/ into compat/.cache/plugins.
+ME=$(ls "$CACHE"/ModelEngine-*.jar 2>/dev/null | head -n 1)
+if [ -n "$ME" ]; then
+  check modelengine 1.20.4 17 1.20.4 "$(basename "$ME")" "$ME"
+else
+  echo "SKIP  ModelEngine: no ModelEngine-*.jar in $CACHE"
+fi
 
 # Latest Paper build of a version, from the PaperMC download API.
 paper() {

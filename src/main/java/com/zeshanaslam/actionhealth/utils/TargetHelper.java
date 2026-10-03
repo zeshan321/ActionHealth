@@ -9,6 +9,7 @@ import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -60,9 +61,21 @@ public class TargetHelper {
 
         Vector facing = source.getLocation().getDirection();
         double fLengthSq = facing.lengthSquared();
+        Location eye = source.getEyeLocation();
+        Vector eyePosition = eye.toVector();
+        Vector eyeDirection = eye.getDirection();
 
         for (Entity entity : list) {
-            if (!isInFront(source, entity) || !(entity instanceof LivingEntity)) continue;
+            if (!(entity instanceof LivingEntity)) continue;
+
+            // Looking at any part of the hitbox counts. This finds large mobs and custom models
+            // (for example ModelEngine), where the player looks far above the entity's feet.
+            if (Compat.rayHitsHitbox(entity, eyePosition, eyeDirection, range)) {
+                targets.add((LivingEntity) entity);
+                continue;
+            }
+
+            if (!isInFront(source, entity)) continue;
 
             Vector relative = entity.getLocation().subtract(source.getLocation()).toVector();
             double dot = relative.dot(facing);
@@ -75,6 +88,9 @@ public class TargetHelper {
             if (dSquared < tolerance) targets.add((LivingEntity) entity);
         }
 
+        // Nearest first, so a large hitbox behind another entity does not take its place.
+        Location location = source.getLocation();
+        targets.sort(Comparator.comparingDouble(target -> target.getLocation().distanceSquared(location)));
         return targets;
     }
 
@@ -301,6 +317,9 @@ public class TargetHelper {
     }
 
     public Block getTarget(Location from, int distance) {
+        // BlockIterator treats 0 as no limit and would walk until it finds a block, loading chunks on the way.
+        if (distance <= 0) return null;
+
         BlockIterator itr = new BlockIterator(from, 0, distance);
         while (itr.hasNext()) {
             Block block = itr.next();
