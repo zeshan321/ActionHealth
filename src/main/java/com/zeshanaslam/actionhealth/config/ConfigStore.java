@@ -32,6 +32,8 @@ public class ConfigStore {
     public String filledHeartIcon;
     public String halfHeartIcon;
     public String emptyHeartIcon;
+    public String absorptionIcon;
+    public int displayTime;
     public List<String> worlds = new ArrayList<>();
     public HashMap<String, String> translate = new HashMap<>();
     public List<String> regions = new ArrayList<>();
@@ -94,6 +96,9 @@ public class ConfigStore {
         filledHeartIcon = plugin.getConfig().getString("Full Health Icon");
         halfHeartIcon = plugin.getConfig().getString("Half Health Icon");
         emptyHeartIcon = plugin.getConfig().getString("Empty Health Icon");
+        // Missing in configs from before 3.7.0, which keeps their look unchanged.
+        absorptionIcon = plugin.getConfig().getString("Absorption Icon", "");
+        displayTime = plugin.getConfig().getInt("Display Time", -1);
         if (plugin.getConfig().getBoolean("Name Change")) {
             for (String s : plugin.getConfig().getStringList("Name")) {
                 String[] split = s.split(" = ");

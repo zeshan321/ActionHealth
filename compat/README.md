@@ -36,9 +36,12 @@ compat/e2e/integrations.sh   # WorldGuard and PlaceholderAPI
 | Scenario | What it checks |
 | --- | --- |
 | look | A bot looks at a cow and gets `Cow: 10/10 ...` (Show On Look). |
+| hex | The message starts with `&#4fdfc4`. The bot gets that hex color on 1.16+, and aqua (the closest legacy color) before 1.16. |
+| absorption | The cow gets 8 absorption health. The bot gets `+8` from `{absorption}` and 8 absorption icons after the 10 health icons. The absorption API exists from 1.14.4, and older versions read it from the server entity. |
 | damage | Show On Look is turned off with `/actionhealth reload`. The bot hits the cow and gets `Cow: 9/10 ...`. |
 | toggle | `/actionhealth toggle` stops the messages. |
 | consume | Action system: Bot1 tags Bot2, Bot2 drinks a regeneration potion, Bot1 gets `Bot2 consumed regen potion!`. The potion name comes from a different API on 1.8, 1.9 to 1.20.1 and 1.20.2+. |
+| display-time | With `Display Time: 10`, the bot gets a blank action bar about 10 ticks after it looks away from the cow. With the default `-1`, it gets no blank action bar. |
 | log | The server log has no ActionHealth errors or warnings. |
 
 `matrix.txt` has 27 Spigot versions: the last release of every minor version from 1.8 to 1.21, plus 26.1.2, 26.2 and 26.3. It also has every NMS revision of 1.8 and 1.9 (the only versions that use NMS), plus extra releases around API changes (1.13, 1.16.1, 1.16.3, 1.20.1, 1.20.4, 1.21.1, 1.21.4). It covers Java 8, 17, 21 and 25. Mineflayer does not support 26.2+ yet, so 26.2 and 26.3 run with ViaVersion and ViaBackwards and a 26.1 client.
@@ -46,14 +49,14 @@ compat/e2e/integrations.sh   # WorldGuard and PlaceholderAPI
 `integrations.sh` runs:
 
 - The WorldGuard region check on one server per WorldGuardWrapper implementation: WorldGuard 6.1 on 1.8.8, 6.2.2 on 1.12.2, 7.0.15 on 1.21.11 and 7.0.19 on 26.3. Inside `testing_region` (a default "Disabled regions" entry) there is no action bar. Outside it, the action bar works.
-- The PlaceholderAPI check on 1.8.8 and 26.3: `%player_name%` in the health message shows the player name.
+- The PlaceholderAPI check on 1.8.8 and 26.3: `%player_name%` in the health message and in the health icons shows the player name.
 - The main test on Paper 1.8.8, 1.20.6, 1.21.11 and 26.3. Paper changes how plugin reflection works on 1.20.5+, so Paper needs its own check.
 
 To test a new Minecraft version, add a line to `matrix.txt` and run `matrix.sh`. The scripts also take a Paper jar: `run.sh <paper.jar> <version> <java> <plugin.jar>`.
 
 ### Results
 
-| Server | 3.5.9 | 3.6.1 |
+| Server | 3.5.9 | 3.7.0 |
 | --- | --- | --- |
 | Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass |
 | Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass |

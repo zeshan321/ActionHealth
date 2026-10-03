@@ -6,6 +6,10 @@
 # {displayname} will use player/mob custom name.
 # {opponentlastdamage} the amount of damage the enemy last received.
 # {percenthealth} displays the percentage of health left.
+# {absorption} shows the absorption health of the mob or player.
+#
+# Colors: use & codes, or hex colors as &#RRGGBB (1.16+, older servers show the closest color).
+# {name} has its colors removed when 'Strip Name' is true. Use {displayname} to keep player nickname colors.
 # Note: if placeholders are being overridden by other plugins you can add 'ah' in front of it i.e {ahhealth}
 #
 # For PlaceholderAPI or MVdWPlaceholderAPI:
@@ -52,9 +56,17 @@ Delay Message: false
 Delay Tick: 1
 
 # Style Health
+# Icons can use PlaceholderAPI placeholders, for example font images.
 Full Health Icon: "&4\u2764"
 Half Health Icon: "&c\u2764"
 Empty Health Icon: "&7\u2764"
+# Added after the health icons, one per heart of absorption (for example from a golden apple). Set to "" to hide.
+Absorption Icon: "&e\u2764"
+
+# Hides the action bar sooner, after this many ticks (20 ticks = 1 second). -1 uses the client default of about 3 seconds.
+# Values above 60 have no effect, because the client hides the action bar after about 3 seconds.
+# When the time ends, ActionHealth clears the action bar, even if another plugin wrote to it in the meantime.
+Display Time: -1
 
 # ActionHealth will be disabled for any world names added below. Case sensitive!
 Disabled worlds:

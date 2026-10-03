@@ -77,5 +77,6 @@ public class HealthListeners implements Listener {
         Player player = event.getPlayer();
 
         plugin.toggle.remove(player.getUniqueId());
+        plugin.healthUtil.cancelClear(player.getUniqueId());
     }
 }
