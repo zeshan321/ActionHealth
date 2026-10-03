@@ -11,24 +11,36 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.codemc.worldguardwrapper.WorldGuardWrapper;
 import org.codemc.worldguardwrapper.region.IWrappedRegion;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HealthUtil {
 
     private Main plugin;
     private final ActionBar actionBar;
     private final PlaceholderSupport placeholderSupport = new PlaceholderSupport();
-    private final Map<UUID, BukkitTask> clearTasks = new HashMap<>();
+    // Thread safe, because Folia runs events and entity tasks on many threads.
+    private final Map<UUID, Scheduler.Task> clearTasks = new ConcurrentHashMap<>();
+    private final Map<UUID, Sent> lastSent = new ConcurrentHashMap<>();
+    // Weak keys: an entry goes away when the server removes the entity.
+    private final Map<Entity, Double> lastDamage = Collections.synchronizedMap(new WeakHashMap<>());
+    private final Map<Class<?>, Optional<Method>> getNameMethods = new ConcurrentHashMap<>();
+
+    /**
+     * The client shows an action bar for about 3 seconds and fades it in the last second.
+     * The look check sends the same message again only after this time, so the bar does not fade.
+     */
+    private static final long RESEND_MILLIS = 1000;
 
     public HealthUtil(Main plugin) {
         this.plugin = plugin;
@@ -36,6 +48,13 @@ public class HealthUtil {
     }
 
     public void sendHealth(Player receiver, LivingEntity entity, double health) {
+        sendHealth(receiver, entity, health, false);
+    }
+
+    /**
+     * @param repeated true for the look check, which sends the same message many times a second
+     */
+    public void sendHealth(Player receiver, LivingEntity entity, double health, boolean repeated) {
         if (plugin.configStore.canSee) {
 
             if (entity instanceof Player) {
@@ -66,20 +85,18 @@ public class HealthUtil {
         }
 
         if (plugin.configStore.delay) {
+            // On the thread of the entity, because it reads the health of the entity.
+            Scheduler.runLaterFor(plugin, entity, () -> {
+                String output = getOutput(entity.getHealth(), plugin.configStore.healthMessage, receiver, entity);
 
-            new BukkitRunnable() {
-                public void run() {
-                    String output = getOutput(entity.getHealth(), plugin.configStore.healthMessage, receiver, entity);
-
-                    if (output != null)
-                        sendActionBar(receiver, output);
-                }
-            }.runTaskLater(plugin, plugin.configStore.delayTick);
+                if (output != null)
+                    sendActionBar(receiver, output, repeated);
+            }, plugin.configStore.delayTick);
         } else {
             String output = getOutput(health, plugin.configStore.healthMessage, receiver, entity);
 
             if (output != null)
-                sendActionBar(receiver, output);
+                sendActionBar(receiver, output, repeated);
         }
     }
 
@@ -143,7 +160,7 @@ public class HealthUtil {
         output = replacePlaceholders(output, "health", String.valueOf((int) health));
         output = replacePlaceholders(output, "maxhealth", String.valueOf((int) maxHealth));
         output = replacePlaceholders(output, "percenthealth", String.valueOf((int) ((health / maxHealth) * 100.0)));
-        output = replacePlaceholders(output, "opponentlastdamage", String.valueOf((int) entity.getLastDamage()));
+        output = replacePlaceholders(output, "opponentlastdamage", String.valueOf((int) getLastDamage(entity)));
         output = replacePlaceholders(output, "absorption", String.valueOf((int) Compat.getAbsorption(entity)));
 
         HealthSendEvent healthSendEvent = new HealthSendEvent(receiver, entity, output);
@@ -159,54 +176,11 @@ public class HealthUtil {
     private String replaceStyle(String output, double health, double maxHealth, LivingEntity entity) {
         if (!output.contains("usestyle")) return output;
 
-        StringBuilder style = new StringBuilder();
-        int left = getLimitHealth(maxHealth);
-        double heart = maxHealth / getLimitHealth(maxHealth);
-        double halfHeart = heart / 2;
-        double tempHealth = health;
-
-        if (maxHealth != health && health >= 0 && !entity.isDead()) {
-            for (int i = 0; i < getLimitHealth(maxHealth); i++) {
-                if (tempHealth - heart > 0) {
-                    tempHealth = tempHealth - heart;
-
-                    style.append(plugin.configStore.filledHeartIcon);
-                    left--;
-                } else {
-                    break;
-                }
-            }
-
-            if (tempHealth > halfHeart) {
-                style.append(plugin.configStore.filledHeartIcon);
-                left--;
-            } else if (tempHealth > 0 && tempHealth <= halfHeart) {
-                style.append(plugin.configStore.halfHeartIcon);
-                left--;
-            }
-        }
-
-        if (maxHealth != health) {
-            for (int i = 0; i < left; i++) {
-                style.append(plugin.configStore.emptyHeartIcon);
-            }
-        } else {
-            for (int i = 0; i < left; i++) {
-                style.append(plugin.configStore.filledHeartIcon);
-            }
-        }
-
-        // Absorption icons after the health icons, one per heart of absorption.
         String absorptionIcon = plugin.configStore.absorptionIcon;
-        if (!absorptionIcon.isEmpty()) {
-            double absorption = Compat.getAbsorption(entity);
-            int icons = Math.min((int) Math.ceil(absorption / heart), getLimitHealth(maxHealth));
-            for (int i = 0; i < icons; i++) {
-                style.append(absorptionIcon);
-            }
-        }
-
-        return replacePlaceholders(output, "usestyle", style.toString());
+        String style = HealthBar.build(health, maxHealth, getLimitHealth(maxHealth), entity.isDead(),
+                plugin.configStore.filledHeartIcon, plugin.configStore.halfHeartIcon, plugin.configStore.emptyHeartIcon,
+                absorptionIcon.isEmpty() ? 0 : Compat.getAbsorption(entity), absorptionIcon);
+        return replacePlaceholders(output, "usestyle", style);
     }
 
     public int getLimitHealth(double maxHealth) {
@@ -262,11 +236,16 @@ public class HealthUtil {
     private String getNameReflection(LivingEntity entity) {
         String name;
         Method getName = null;
-        try {
-            if (entity.getCustomName() == null)
-                // No null parameter array: Paper's reflection remapper throws on it (1.20.5 to early 1.21).
-                getName = entity.getClass().getMethod("getName");
-        } catch (NoSuchMethodException | SecurityException ignored) {
+        if (entity.getCustomName() == null) {
+            // Cached for each class, because the look check runs this many times a second.
+            getName = getNameMethods.computeIfAbsent(entity.getClass(), type -> {
+                try {
+                    // No null parameter array: Paper's reflection remapper throws on it (1.20.5 to early 1.21).
+                    return Optional.of(type.getMethod("getName"));
+                } catch (NoSuchMethodException | SecurityException e) {
+                    return Optional.empty();
+                }
+            }).orElse(null);
         }
 
         if (getName != null) {
@@ -294,11 +273,27 @@ public class HealthUtil {
     }
 
     public void sendActionBar(Player player, String message) {
+        sendActionBar(player, message, false);
+    }
+
+    /**
+     * @param repeated true for messages that the look check sends many times a second. The same
+     *                 message is then sent again only after {@link #RESEND_MILLIS}.
+     */
+    public void sendActionBar(Player player, String message, boolean repeated) {
         // NPC players (for example Citizens) have no client to show the message.
         if (player.hasMetadata("NPC"))
             return;
 
-        actionBar.send(player, Colors.translate(message));
+        String translated = Colors.translate(message);
+        long now = System.currentTimeMillis();
+        Sent sent = lastSent.get(player.getUniqueId());
+        if (!repeated || sent == null || !sent.message.equals(translated) || now - sent.time >= RESEND_MILLIS) {
+            actionBar.send(player, translated);
+            lastSent.put(player.getUniqueId(), new Sent(translated, now));
+        }
+
+        // Restart the timer even when the message was not sent again: the player still looks at the entity.
         scheduleClear(player);
     }
 
@@ -307,21 +302,50 @@ public class HealthUtil {
      * Each new message restarts the timer, so the bar stays while the player keeps looking at an entity.
      */
     private void scheduleClear(Player player) {
-        cancelClear(player.getUniqueId());
-        if (plugin.configStore.displayTime <= 0) return;
+        UUID uuid = player.getUniqueId();
+        if (plugin.configStore.displayTime <= 0) {
+            cancelClear(uuid);
+            return;
+        }
 
-        clearTasks.put(player.getUniqueId(), new BukkitRunnable() {
-            public void run() {
-                clearTasks.remove(player.getUniqueId());
+        // Replaced in one atomic step, because on Folia two threads can send to the same player.
+        Scheduler.Task[] task = new Scheduler.Task[1];
+        clearTasks.compute(uuid, (key, previous) -> {
+            if (previous != null) previous.cancel();
+            task[0] = Scheduler.runLaterFor(plugin, player, () -> {
+                // A newer message replaced this task: do not clear the bar.
+                if (!clearTasks.remove(uuid, task[0])) return;
+                lastSent.remove(uuid);
                 // A space, not an empty message: some clients reject an empty text component.
                 if (player.isOnline()) actionBar.send(player, " ");
-            }
-        }.runTaskLater(plugin, plugin.configStore.displayTime));
+            }, plugin.configStore.displayTime);
+            return task[0];
+        });
     }
 
     public void cancelClear(UUID uuid) {
-        BukkitTask task = clearTasks.remove(uuid);
+        Scheduler.Task task = clearTasks.remove(uuid);
         if (task != null) task.cancel();
+    }
+
+    /**
+     * Removes the data of a player who left.
+     */
+    public void forget(UUID uuid) {
+        cancelClear(uuid);
+        lastSent.remove(uuid);
+    }
+
+    public void setLastDamage(LivingEntity entity, double damage) {
+        lastDamage.put(entity, damage);
+    }
+
+    /**
+     * The last damage that the entity took, for {opponentlastdamage}.
+     */
+    public double getLastDamage(LivingEntity entity) {
+        Double damage = lastDamage.get(entity);
+        return damage != null ? damage : entity.getLastDamage();
     }
 
     public boolean isDisabled(Location location) {
@@ -368,10 +392,10 @@ public class HealthUtil {
         if (plugin.configStore.usePerms && !player.hasPermission("ActionHealth.Health"))
             return false;
 
-        if (player.getUniqueId() == damaged.getUniqueId())
+        if (player.getUniqueId().equals(damaged.getUniqueId()))
             return false;
 
-        if (plugin.toggle.contains(player.getUniqueId())) {
+        if (plugin.toggles.isToggled(player.getUniqueId())) {
             sendMessage(player);
             return false;
         }
@@ -408,14 +432,20 @@ public class HealthUtil {
     }
 
     public void setActionToggle(UUID uuid, boolean disable) {
-        if (disable) {
-            plugin.toggle.add(uuid);
-        } else {
-            plugin.toggle.remove(uuid);
-        }
+        plugin.toggles.setToggled(uuid, disable, plugin.configStore.rememberToggle);
     }
 
     public boolean isActionDisabled(UUID uuid) {
-        return plugin.toggle.contains(uuid);
+        return plugin.toggles.isToggled(uuid);
+    }
+
+    private static final class Sent {
+        final String message;
+        final long time;
+
+        Sent(String message, long time) {
+            this.message = message;
+            this.time = time;
+        }
     }
 }

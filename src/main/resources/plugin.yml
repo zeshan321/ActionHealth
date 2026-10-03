@@ -3,6 +3,17 @@ main: com.zeshanaslam.actionhealth.Main
 version: "${version}"
 softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, WorldGuard, mcMMO, MythicMobs, LangUtils]
 api-version: 1.13
+folia-supported: true
 commands:
   Actionhealth:
     description: Actionhealth main commands.
+permissions:
+  ActionHealth.Health:
+    description: Lets a player see health messages. Applies only when 'Use Permissions' is true.
+    default: op
+  ActionHealth.Reload:
+    description: Lets a player use /actionhealth reload.
+    default: op
+  ActionHealth.Toggle:
+    description: Lets a player use /actionhealth toggle.
+    default: true

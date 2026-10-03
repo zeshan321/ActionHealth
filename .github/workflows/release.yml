@@ -1,0 +1,60 @@
+name: Release
+
+# Push an annotated tag that matches the version in build.gradle, for example:
+#   git tag -a 3.8.0 -F notes.md && git push origin 3.8.0
+# The first line of the tag message is the release title. The rest is the release text.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The checkout has only the commit. The tag message is in the tag object.
+      - name: Fetch the tag
+        run: git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+
+      - name: Check that the tag matches the version
+        run: |
+          version=$(sed -nE "s/^version = '([^']+)'.*/\1/p" build.gradle | tr -d '\r')
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "build.gradle has version $version, but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build
+        run: ./gradlew clean build
+
+      - name: Cache spigot-api jars
+        uses: actions/cache@v4
+        with:
+          path: compat/.cache
+          key: spigot-api-${{ github.run_id }}
+          restore-keys: spigot-api-
+
+      - name: Check API linkage against every Spigot version
+        run: compat/linkage-check.sh
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          jar="build/libs/ActionHealth-$GITHUB_REF_NAME-all.jar"
+          git for-each-ref "refs/tags/$GITHUB_REF_NAME" --format='%(contents)' > message.md
+          title=$(head -n 1 message.md)
+          tail -n +3 message.md > notes.md
+          printf '\nSHA-256 of %s: `%s`\n' "$(basename "$jar")" "$(sha256sum "$jar" | cut -d ' ' -f 1)" >> notes.md
+          gh release create "$GITHUB_REF_NAME" "$jar" --title "$title" --notes-file notes.md --verify-tag

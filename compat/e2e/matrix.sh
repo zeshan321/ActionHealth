@@ -8,19 +8,14 @@
 set -uo pipefail
 
 DIR=$(cd "$(dirname "$0")" && pwd)
+. "$DIR/lib.sh"
 [ -d "$DIR/node_modules" ] || docker run --rm -v "$DIR:$DIR" -w "$DIR" node:22-slim npm ci --silent
 PLUGIN=${1:-$(ls "$DIR"/../../build/libs/ActionHealth-*-all.jar | head -n 1)}
 PLUGIN=$(cd "$(dirname "$PLUGIN")" && pwd)/$(basename "$PLUGIN")
 JOBS=${2:-4}
 export SPIGOT_DIR=${SPIGOT_DIR:-$DIR/../.cache/spigot}
-VIA_DIR="$DIR/../.cache/via"
-VIA=5.12.0
-mkdir -p "$SPIGOT_DIR" "$VIA_DIR" "$DIR/runs"
-
-for p in ViaVersion ViaBackwards; do
-  [ -f "$VIA_DIR/$p-$VIA.jar" ] || curl -sfL -o "$VIA_DIR/$p-$VIA.jar" \
-    "https://github.com/ViaVersion/$p/releases/download/$VIA/$p-$VIA.jar"
-done
+mkdir -p "$SPIGOT_DIR"
+fetch_via
 
 entries=$(grep -vE '^\s*(#|$)' "$DIR/matrix.txt")
 

@@ -5,52 +5,53 @@ import com.zeshanaslam.actionhealth.action.ActionListener;
 import com.zeshanaslam.actionhealth.action.ActionTask;
 import com.zeshanaslam.actionhealth.commands.HealthCommand;
 import com.zeshanaslam.actionhealth.config.ConfigStore;
+import com.zeshanaslam.actionhealth.config.ConfigUpdater;
+import com.zeshanaslam.actionhealth.config.ToggleStore;
 import com.zeshanaslam.actionhealth.events.HealthListeners;
 import com.zeshanaslam.actionhealth.utils.HealthUtil;
-import com.zeshanaslam.actionhealth.utils.Metrics;
+import com.zeshanaslam.actionhealth.utils.Scheduler;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class Main extends JavaPlugin {
 
     public ConfigStore configStore;
     public boolean worldGuardEnabled;
     public HealthUtil healthUtil;
-    public int taskID = -1;
+    public Scheduler.Task lookTask;
     public boolean mcMMOEnabled;
     public boolean mythicMobsEnabled;
     public boolean langUtilsEnabled;
-    public BukkitTask actionTask;
+    public Scheduler.Task actionTask;
     public Metrics metrics;
-
-    public List<UUID> toggle = new ArrayList<>();
+    public ToggleStore toggles;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        updateConfig();
 
         // Register health util
         this.healthUtil = new HealthUtil(this);
+        toggles = new ToggleStore(getDataFolder(), getLogger());
 
         // Load config settings
         configStore = new ConfigStore(this);
-
-        // Create player folder
-        File file = new File("plugins/ActionHealth/players/");
-        file.mkdirs();
+        toggles.load(configStore.rememberToggle);
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
         getServer().getPluginManager().registerEvents(new ActionListener(this, new ActionHelper(this)), this);
 
         // Register commands
-        getCommand("Actionhealth").setExecutor(new HealthCommand(this));
+        PluginCommand command = getCommand("Actionhealth");
+        HealthCommand healthCommand = new HealthCommand(this);
+        command.setExecutor(healthCommand);
+        command.setTabCompleter(healthCommand);
 
         worldGuardEnabled = Bukkit.getServer().getPluginManager().isPluginEnabled("WorldGuard");
 
@@ -66,11 +67,24 @@ public class Main extends JavaPlugin {
             langUtilsEnabled = true;
         }
 
-        actionTask = new ActionTask(this).runTaskTimer(this, 0, configStore.checkTicks);
+        // Tags last whole seconds, so a check every second is enough.
+        actionTask = Scheduler.runTimer(this, new ActionTask(this), 20);
     }
 
     @Override
     public void onDisable() {
+        if (lookTask != null) lookTask.cancel();
+        if (actionTask != null) actionTask.cancel();
+    }
 
+    /**
+     * Adds options from new versions to config.yml, then reloads it.
+     */
+    public void updateConfig() {
+        List<String> added = ConfigUpdater.update(this);
+        if (!added.isEmpty()) {
+            getLogger().info("Added new options to config.yml: " + String.join(", ", added));
+            reloadConfig();
+        }
     }
 }

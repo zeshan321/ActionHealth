@@ -35,6 +35,9 @@ On Enable: '&7ActionHealth has been &cenabled&7.'
 # {name} shows the name of the player.
 On Disable: '&7ActionHealth has been &cdisabled&7.'
 
+# Message sent to a player who runs a command without the permission for it.
+No Permission: '&cYou do not have permission to do that.'
+
 # Strip Name.
 Strip Name: true
 
@@ -83,11 +86,10 @@ Region PvP: true
 Limit Health: 10
 
 # If 'Limit Health' is set to -1. With 'Upper Limit Health' you can trigger 'Limit Health' logic to prevent 'Use Style' going off screen'
-# '40 -> 10' = If health over 40, use limit health 10. Leave empty to disable
+# '40 -> 10' = If health over 40, use limit health 10. Leave empty ('') to disable
 Upper Limit Health: "40 -> 10"
 
-# Saves players /actionhealth toggle state.
-# Uses flat file. If interested in SQL support ask in discussion.
+# Saves players /actionhealth toggle state in plugins/ActionHealth/toggles.yml.
 Remember Toggle: false
 
 # Blacklist by entity name or entity display name.
@@ -106,7 +108,7 @@ Look Distance: 10
 
 LookValues:
   # How often (in ticks) to check if player is looking at an entity. Increase if lagging, maybe to 10 or 20.
-  CheckTicks: 0
+  CheckTicks: 2
   # If the dot product is positive, the target is in front
   Dot: 0
   # Tolerance of the line calculation
@@ -123,9 +125,6 @@ Spectator Mode: true
 
 # If true show MiniaturePets health or not
 ShowMiniaturePets: true
-
-# If true show Armor Stand health or not
-ShowArmorStand: true
 
 # Translate names. Case sensitive!
 # Check ActionHealth page if translations already exist for the language you plan on using.

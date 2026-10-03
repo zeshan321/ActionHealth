@@ -4,5 +4,8 @@
   "description": "Joins a real server with bots and checks the ActionHealth action bar.",
   "dependencies": {
     "mineflayer": "4.39.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

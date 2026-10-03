@@ -36,3 +36,44 @@ jobs:
         with:
           name: ActionHealth
           path: build/libs/ActionHealth-*-all.jar
+
+  # Starts real servers in Docker and checks the action bar with bots. See compat/e2e/ci.sh.
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ActionHealth
+          path: build/libs
+
+      # BuildTools takes several minutes for each Spigot version, so keep the jars.
+      - name: Cache Spigot jars
+        uses: actions/cache@v4
+        with:
+          path: compat/.cache/spigot/spigot-*.jar
+          key: spigot-jars-1.8.8-1.21.11
+
+      - name: Cache Paper, Folia and ViaVersion jars
+        uses: actions/cache@v4
+        with:
+          path: |
+            compat/.cache/plugins
+            compat/.cache/via
+          key: e2e-jars-${{ hashFiles('compat/e2e/ci.sh', 'compat/e2e/lib.sh') }}
+
+      - name: Run the bot tests
+        run: compat/e2e/ci.sh "$(ls build/libs/ActionHealth-*-all.jar)"
+
+      - name: Upload the server logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: |
+            compat/e2e/runs/*.log
+            compat/e2e/runs/*/logs/latest.log
+            compat/.cache/spigot/logs/*.log

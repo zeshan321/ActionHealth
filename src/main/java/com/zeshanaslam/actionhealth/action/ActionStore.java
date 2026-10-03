@@ -4,10 +4,19 @@ import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.action.data.Action;
 import com.zeshanaslam.actionhealth.action.data.Tagged;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ActionStore {
 
@@ -16,7 +25,8 @@ public class ActionStore {
     public int tagLength;
     public int tagAmount;
     public HashMap<ActionType, List<Action>> events;
-    public HashMap<UUID, List<Tagged>> tagged = new HashMap<>();
+    // Thread safe, because Folia runs events on many threads.
+    public Map<UUID, List<Tagged>> tagged = new ConcurrentHashMap<>();
     public boolean isUsingAnyDamageCause = false;
 
     public ActionStore(Main main) {
@@ -26,10 +36,26 @@ public class ActionStore {
         tagAmount = main.getConfig().getInt("Action.TagAmount");
         events = new HashMap<>();
 
-        for (String action : main.getConfig().getConfigurationSection("Action.Events").getKeys(false)) {
-            for (String type : main.getConfig().getConfigurationSection("Action.Events." + action).getKeys(false)) {
-                String output = main.getConfig().getString("Action.Events." + action + "." + type);
-                ActionType actionType = ActionType.valueOf(action);
+        ConfigurationSection eventSection = main.getConfig().getConfigurationSection("Action.Events");
+        if (eventSection == null) return;
+
+        for (String action : eventSection.getKeys(false)) {
+            ActionType actionType;
+            try {
+                actionType = ActionType.valueOf(action.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                main.getLogger().warning("Action.Events: '" + action + "' was skipped. Use CONSUME, RIGHTCLICK, LEFTCLICK, SWAP or DAMAGE.");
+                continue;
+            }
+
+            ConfigurationSection typeSection = eventSection.getConfigurationSection(action);
+            if (typeSection == null) {
+                main.getLogger().warning("Action.Events: '" + action + "' was skipped. It needs a list of items or damage causes with a message.");
+                continue;
+            }
+
+            for (String type : typeSection.getKeys(false)) {
+                String output = typeSection.getString(type);
 
                 if (actionType == ActionType.DAMAGE && output != null && output.equalsIgnoreCase("any")) {
                     isUsingAnyDamageCause = true;
@@ -48,21 +74,18 @@ public class ActionStore {
     }
 
     public void addTag(UUID damager, UUID damaged) {
-        if (damager == damaged)
+        if (damager.equals(damaged))
             return;
 
-        if (tagged.containsKey(damager)) {
+        tagged.compute(damager, (key, taggedList) -> {
+            if (taggedList == null) taggedList = new CopyOnWriteArrayList<>();
             // Remove oldest if > tag amount to add new player
-            if (tagAmount != -1 && tagged.get(damager).size() >= tagAmount)
-                tagged.get(damager).remove(0);
+            if (tagAmount != -1 && taggedList.size() >= tagAmount && !taggedList.isEmpty())
+                taggedList.remove(0);
 
-            tagged.get(damager).add(new Tagged(damager, damaged, System.currentTimeMillis()));
-        } else {
-            List<Tagged> taggedList = new ArrayList<>();
             taggedList.add(new Tagged(damager, damaged, System.currentTimeMillis()));
-
-            tagged.put(damager, taggedList);
-        }
+            return taggedList;
+        });
     }
 
     public void remove(UUID remove) {

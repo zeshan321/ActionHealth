@@ -13,7 +13,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * <p>Helper class for getting targets using various methods</p>
+ * <p>Finds the entities that a player looks at.</p>
  */
 public class TargetHelper {
 
@@ -22,13 +22,6 @@ public class TargetHelper {
     public TargetHelper(Main main) {
         this.main = main;
     }
-
-    /**
-     * <p>Number of pixels that end up displaying about 1 degree of vision in the client window</p>
-     * <p>Not really useful since you can't get the client's window size, but I added it in case
-     * it becomes useful sometime</p>
-     */
-    private final int PIXELS_PER_DEGREE = 35;
 
     /**
      * <p>Gets all entities the player is looking at within the range</p>
@@ -70,7 +63,7 @@ public class TargetHelper {
 
             // Looking at any part of the hitbox counts. This finds large mobs and custom models
             // (for example ModelEngine), where the player looks far above the entity's feet.
-            if (Compat.rayHitsHitbox(entity, eyePosition, eyeDirection, range)) {
+            if (Compat.rayTraceHitbox(entity, eyePosition, eyeDirection, range) != null) {
                 targets.add((LivingEntity) entity);
                 continue;
             }
@@ -95,85 +88,6 @@ public class TargetHelper {
     }
 
     /**
-     * <p>Gets the entity the player is looking at</p>
-     * <p>Has a little bit of tolerance to make targeting easier</p>
-     *
-     * @param source living entity to get the target of
-     * @param range  maximum range to check
-     * @return entity player is looing at or null if not found
-     */
-    public LivingEntity getLivingTarget(LivingEntity source, double range) {
-        return getLivingTarget(source, range, main.configStore.lookTolerance);
-    }
-
-    /**
-     * <p>Gets the entity the player is looking at</p>
-     * <p>Has a little bit of tolerance to make targeting easier</p>
-     *
-     * @param source    living entity to get the target of
-     * @param range     maximum range to check
-     * @param tolerance tolerance of the line calculation
-     * @return entity player is looking at or null if not found
-     */
-    public LivingEntity getLivingTarget(LivingEntity source, double range, double tolerance) {
-        List<LivingEntity> targets = getLivingTargets(source, range, tolerance);
-        if (targets.size() == 0) return null;
-        LivingEntity target = targets.get(0);
-        double minDistance = target.getLocation().distanceSquared(source.getLocation());
-        for (LivingEntity entity : targets) {
-            double distance = entity.getLocation().distanceSquared(source.getLocation());
-            if (distance < minDistance) {
-                minDistance = distance;
-                target = entity;
-            }
-        }
-        return target;
-    }
-
-    /**
-     * Gets the targets in a cone
-     *
-     * @param source entity to get the targets for
-     * @param arc    arc angle of the cone
-     * @param range  range of the cone
-     * @return list of targets
-     */
-    public List<LivingEntity> getConeTargets(LivingEntity source, double arc, double range) {
-        List<LivingEntity> targets = new ArrayList<LivingEntity>();
-        List<Entity> list = source.getNearbyEntities(range, range, range);
-        if (arc <= 0) return targets;
-
-        // Initialize values
-        Vector dir = source.getLocation().getDirection();
-        dir.setY(0);
-        double cos = Math.cos(arc * Math.PI / 180);
-        double cosSq = cos * cos;
-
-        // Get the targets in the cone
-        for (Entity entity : list) {
-            if (entity instanceof LivingEntity) {
-
-                // Greater than 360 degrees is all targets
-                if (arc >= 360) {
-                    targets.add((LivingEntity) entity);
-                }
-
-                // Otherwise, select targets based on dot product
-                else {
-                    Vector relative = entity.getLocation().subtract(source.getLocation()).toVector();
-                    relative.setY(0);
-                    double dot = relative.dot(dir);
-                    double value = dot * dot / relative.lengthSquared();
-                    if (arc < 180 && dot > 0 && value >= cosSq) targets.add((LivingEntity) entity);
-                    else if (arc >= 180 && (dot > 0 || dot <= cosSq)) targets.add((LivingEntity) entity);
-                }
-            }
-        }
-
-        return targets;
-    }
-
-    /**
      * Checks if the entity is in front of the entity
      *
      * @param entity entity to check for
@@ -193,150 +107,86 @@ public class TargetHelper {
     }
 
     /**
-     * Checks if the entity is in front of the entity restricted to the given angle
-     *
-     * @param entity entity to check for
-     * @param target target to check against
-     * @param angle  angle to restrict it to (0-360)
-     * @return true if the target is in front of the entity
+     * Returns true if no solid block is on the line of sight of the player before the target.
+     * The line of sight ends where it hits the hitbox of the target (1.13.2+). On older servers,
+     * or if the line passes next to the target, it ends at the point nearest to the middle of the target.
      */
-    public boolean isInFront(Entity entity, Entity target, double angle) {
-        if (angle <= 0) return false;
-        if (angle >= 360) return true;
+    public boolean canSee(LivingEntity from, LivingEntity target) {
+        Location eye = from.getEyeLocation();
+        Vector start = eye.toVector();
+        Vector direction = eye.getDirection();
 
-        // Get the necessary data
-        double dotTarget = Math.cos(angle);
-        Vector facing = entity.getLocation().getDirection();
-        Vector relative = target.getLocation().subtract(entity.getLocation()).toVector().normalize();
+        double distance;
+        Vector hit = Compat.rayTraceHitbox(target, start, direction, main.configStore.lookDistance);
+        if (hit != null) {
+            distance = hit.distance(start);
+        } else {
+            Vector feet = target.getLocation().toVector();
+            Vector targetEye = target.getEyeLocation().toVector();
+            Vector middle = new Vector((feet.getX() + targetEye.getX()) / 2, (feet.getY() + targetEye.getY()) / 2,
+                    (feet.getZ() + targetEye.getZ()) / 2);
+            distance = middle.subtract(start).dot(direction);
+        }
 
-        // Compare the target dot product with the actual result
-        return facing.dot(relative) >= dotTarget;
+        return !isBlocked(eye, distance);
     }
 
     /**
-     * Checks if the target is behind the entity
-     *
-     * @param entity entity to check for
-     * @param target target to check against
-     * @return true if the target is behind the entity
+     * Returns true if a solid block is on the line of sight from the eye, closer than the distance.
      */
-    public boolean isBehind(Entity entity, Entity target) {
-        return !isInFront(entity, target);
-    }
+    private boolean isBlocked(Location eye, double distance) {
+        // Also stops BlockIterator with 0, which means no limit: it would walk until it finds a block, loading chunks on the way.
+        if (distance <= 0) return false;
 
-    /**
-     * Checks if the entity is behind the player restricted to the given angle
-     *
-     * @param entity entity to check for
-     * @param target target to check against
-     * @param angle  angle to restrict it to (0-360)
-     * @return true if the target is behind the entity
-     */
-    public boolean isBehind(Entity entity, Entity target, double angle) {
-        if (angle <= 0) return false;
-        if (angle >= 360) return true;
+        Vector start = eye.toVector();
+        Vector direction = eye.getDirection();
+        try {
+            BlockIterator iterator = new BlockIterator(eye, 0, (int) Math.ceil(distance) + 1);
+            while (iterator.hasNext()) {
+                Block block = iterator.next();
+                if (!block.getType().isOccluding()) continue;
 
-        // Get the necessary data
-        double dotTarget = Math.cos(angle);
-        Vector facing = entity.getLocation().getDirection();
-        Vector relative = entity.getLocation().subtract(target.getLocation()).toVector().normalize();
+                double entry = rayBoxEntry(start, direction, block.getX(), block.getY(), block.getZ(),
+                        block.getX() + 1, block.getY() + 1, block.getZ() + 1);
+                // The iterator returns blocks in order along the line, so the first solid block decides.
+                if (entry >= 0) return entry < distance;
+            }
 
-        // Compare the target dot product and the actual result
-        return facing.dot(relative) >= dotTarget;
-    }
-
-    /**
-     * Checks whether or not the line between the two points is obstructed
-     *
-     * @param loc1 first location
-     * @param loc2 second location
-     * @return the location of obstruction or null if not obstructed
-     */
-    public boolean isObstructed(Location loc1, Location loc2) {
-        if (loc1.getX() == loc2.getX() && loc1.getY() == loc2.getY() && loc1.getZ() == loc2.getZ()) {
             return false;
+        } catch (RuntimeException e) {
+            // BlockIterator throws "Start block missed" when the eye is outside the world, for example in the void.
+            // Folia can also throw if the line reaches a region that another thread owns.
+            return true;
         }
-        Vector slope = loc2.clone().subtract(loc1).toVector();
-        int steps = (int) (slope.length() * 4) + 1;
-        slope.multiply(1.0 / steps);
-        Location temp = loc1.clone();
-        for (int i = 0; i < steps; i++) {
-            temp.add(slope);
-            if (temp.getBlock().getType().isSolid() && !temp.getBlock().getType().toString().contains("FENCE") && !temp.getBlock().getType().toString().contains("GLASS")) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
-     * Retrieves an open location along the line for teleporting or linear targeting
-     *
-     * @param loc1        start location of the path
-     * @param loc2        end location of the path
-     * @param throughWall whether or not going through walls is allowed
-     * @return the farthest open location along the path
+     * Returns the distance along the ray to where it enters the box, 0 if the ray starts inside the
+     * box, or -1 if the ray misses the box. The direction must have a length of 1.
      */
-    public Location getOpenLocation(Location loc1, Location loc2, boolean throughWall) {
-        // Special case
-        if (loc1.getX() == loc2.getX() && loc1.getY() == loc2.getY() && loc1.getZ() == loc2.getZ()) {
-            return loc1;
-        }
+    static double rayBoxEntry(Vector origin, Vector direction, double minX, double minY, double minZ,
+                              double maxX, double maxY, double maxZ) {
+        double[] o = {origin.getX(), origin.getY(), origin.getZ()};
+        double[] d = {direction.getX(), direction.getY(), direction.getZ()};
+        double[] min = {minX, minY, minZ};
+        double[] max = {maxX, maxY, maxZ};
 
-        // Common data
-        Vector slope = loc2.clone().subtract(loc1).toVector();
-        int steps = (int) (slope.length() * 4) + 1;
-        slope.multiply(1.0 / steps);
-
-        // Going through walls starts at the end and traverses backwards
-        if (throughWall) {
-            Location temp = loc2.clone();
-            while (temp.getBlock().getType().isSolid() && steps > 0) {
-                temp.subtract(slope);
-                steps--;
-            }
-            temp.setX(temp.getBlockX() + 0.5);
-            temp.setZ(temp.getBlockZ() + 0.5);
-            temp.setY(temp.getBlockY() + 1);
-            return temp;
-        }
-
-        // Not going through walls starts at the beginning and traverses forward
-        else {
-            Location temp = loc1.clone();
-            while (!temp.getBlock().getType().isSolid() && steps > 0) {
-                temp.add(slope);
-                steps--;
-            }
-            temp.subtract(slope);
-            temp.setX(temp.getBlockX() + 0.5);
-            temp.setZ(temp.getBlockZ() + 0.5);
-            temp.setY(temp.getBlockY() + 1);
-            return temp;
-        }
-    }
-
-    public Block getTarget(Location from, int distance) {
-        // BlockIterator treats 0 as no limit and would walk until it finds a block, loading chunks on the way.
-        if (distance <= 0) return null;
-
-        BlockIterator itr = new BlockIterator(from, 0, distance);
-        while (itr.hasNext()) {
-            Block block = itr.next();
-            if (!block.getType().isOccluding()) {
+        double near = 0;
+        double far = Double.POSITIVE_INFINITY;
+        for (int axis = 0; axis < 3; axis++) {
+            if (Math.abs(d[axis]) < 1e-12) {
+                // Parallel to this axis: the ray must already be between the two sides.
+                if (o[axis] < min[axis] || o[axis] > max[axis]) return -1;
                 continue;
             }
-            return block;
-        }
-        return null;
-    }
 
-    public boolean canSee(LivingEntity from, Location to) {
-        try {
-            return getTarget(from.getEyeLocation(), (int) Math.ceil(from.getLocation().distance(to))) == null;
-        } catch (IllegalStateException e) {
-            // BlockIterator throws "Start block missed" when the eye is outside the world, for example in the void.
-            return false;
+            double t1 = (min[axis] - o[axis]) / d[axis];
+            double t2 = (max[axis] - o[axis]) / d[axis];
+            near = Math.max(near, Math.min(t1, t2));
+            far = Math.min(far, Math.max(t1, t2));
+            if (near > far) return -1;
         }
+
+        return near;
     }
 }
