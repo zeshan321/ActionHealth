@@ -34,10 +34,12 @@ for extra in "$@"; do
   case "$(basename "$extra")" in Via*) VIA=1 ;; esac
 done
 
-# Default config with health numbers in the message, so the test can read them.
+# Default config with health numbers and a hex color in the message, so the test can read them.
 STYLE='{usestyle}'
-[ "${MODE:-}" = placeholderapi ] && STYLE='%player_name%'
-sed "s/^Health Message: .*/Health Message: '\&7\&l{name}: {health}\/{maxhealth} $STYLE'/" \
+ICON='"\&4\\u2764"'
+if [ "${MODE:-}" = placeholderapi ]; then STYLE='%player_name% {usestyle}'; ICON='"%player_name%"'; fi
+sed -e "s/^Health Message: .*/Health Message: '\&#4fdfc4\&l{name}: {health}\/{maxhealth} +{absorption} $STYLE'/" \
+  -e "s/^Full Health Icon: .*/Full Health Icon: $ICON/" \
   "$DIR/../../src/main/resources/config.yml" > "$RUN/plugins/ActionHealth/config.yml"
 
 level=FLAT

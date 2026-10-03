@@ -21,6 +21,12 @@ public final class Compat {
     private static final Method GET_ATTRIBUTE = Reflect.findMethod(LivingEntity.class, "getAttribute", ATTRIBUTE);
     private static final Method GET_ATTRIBUTE_VALUE = Reflect.findMethod(Reflect.findClass("org.bukkit.attribute.AttributeInstance"), "getValue");
 
+    // Absorption: getAbsorptionAmount (1.14.4+), else getAbsorptionHearts on the NMS entity (1.8 to 1.16.5).
+    private static final Method GET_ABSORPTION = Reflect.findMethod(LivingEntity.class, "getAbsorptionAmount");
+    private static Method getHandle;
+    private static Method getAbsorptionHearts;
+    private static boolean nmsAbsorptionChecked;
+
     // Base potion of a potion item: getBasePotionType (1.20.2+), getBasePotionData (1.9+), Potion.fromItemStack (1.8).
     private static final Method GET_BASE_POTION_TYPE = Reflect.findMethod(PotionMeta.class, "getBasePotionType");
     private static final Method GET_BASE_POTION_DATA = Reflect.findMethod(PotionMeta.class, "getBasePotionData");
@@ -47,6 +53,40 @@ public final class Compat {
         }
 
         return entity.getMaxHealth();
+    }
+
+    /**
+     * Returns the absorption health of an entity, or 0 if the server has no way to read it.
+     */
+    public static double getAbsorption(LivingEntity entity) {
+        try {
+            if (GET_ABSORPTION != null) {
+                return ((Number) GET_ABSORPTION.invoke(entity)).doubleValue();
+            }
+
+            if (!nmsAbsorptionChecked) {
+                // CraftLivingEntity#getHandle returns the NMS EntityLiving and works for every living entity.
+                Class<?> type = entity.getClass();
+                while (type != null && !type.getSimpleName().equals("CraftLivingEntity")) {
+                    type = type.getSuperclass();
+                }
+                // Not a CraftBukkit entity (for example a custom entity from another plugin): try again next time.
+                if (type == null) return 0;
+
+                nmsAbsorptionChecked = true;
+                getHandle = Reflect.findMethod(type, "getHandle");
+                if (getHandle != null) {
+                    getAbsorptionHearts = Reflect.findMethod(getHandle.getReturnType(), "getAbsorptionHearts");
+                }
+            }
+
+            if (getAbsorptionHearts != null) {
+                return ((Number) getAbsorptionHearts.invoke(getHandle.invoke(entity))).doubleValue();
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+        }
+
+        return 0;
     }
 
     /**

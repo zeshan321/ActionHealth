@@ -12,12 +12,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.codemc.worldguardwrapper.WorldGuardWrapper;
 import org.codemc.worldguardwrapper.region.IWrappedRegion;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class HealthUtil {
@@ -25,6 +28,7 @@ public class HealthUtil {
     private Main plugin;
     private final ActionBar actionBar;
     private final PlaceholderSupport placeholderSupport = new PlaceholderSupport();
+    private final Map<UUID, BukkitTask> clearTasks = new HashMap<>();
 
     public HealthUtil(Main plugin) {
         this.plugin = plugin;
@@ -93,6 +97,13 @@ public class HealthUtil {
             }
         }
 
+        if (!(entity instanceof Player) && !plugin.configStore.healthMessageOther.isEmpty()) {
+            output = plugin.configStore.healthMessageOther;
+        }
+
+        // Before PlaceholderAPI, so placeholders in the health icons are replaced too.
+        output = replaceStyle(output, health, maxHealth, entity);
+
         if (entity instanceof Player) {
             String displayName;
             Player player = (Player) entity;
@@ -116,10 +127,6 @@ public class HealthUtil {
                 output = placeholderSupport.setPlaceholderAPI(player, output);
             }
         } else {
-            if (!plugin.configStore.healthMessageOther.isEmpty()) {
-                output = plugin.configStore.healthMessageOther;
-            }
-
             output = replacePlaceholders(output, "displayname", name);
         }
 
@@ -137,47 +144,7 @@ public class HealthUtil {
         output = replacePlaceholders(output, "maxhealth", String.valueOf((int) maxHealth));
         output = replacePlaceholders(output, "percenthealth", String.valueOf((int) ((health / maxHealth) * 100.0)));
         output = replacePlaceholders(output, "opponentlastdamage", String.valueOf((int) entity.getLastDamage()));
-
-        if (output.contains("usestyle")) {
-            StringBuilder style = new StringBuilder();
-            int left = getLimitHealth(maxHealth);
-            double heart = maxHealth / getLimitHealth(maxHealth);
-            double halfHeart = heart / 2;
-            double tempHealth = health;
-
-            if (maxHealth != health && health >= 0 && !entity.isDead()) {
-                for (int i = 0; i < getLimitHealth(maxHealth); i++) {
-                    if (tempHealth - heart > 0) {
-                        tempHealth = tempHealth - heart;
-
-                        style.append(plugin.configStore.filledHeartIcon);
-                        left--;
-                    } else {
-                        break;
-                    }
-                }
-
-                if (tempHealth > halfHeart) {
-                    style.append(plugin.configStore.filledHeartIcon);
-                    left--;
-                } else if (tempHealth > 0 && tempHealth <= halfHeart) {
-                    style.append(plugin.configStore.halfHeartIcon);
-                    left--;
-                }
-            }
-
-            if (maxHealth != health) {
-                for (int i = 0; i < left; i++) {
-                    style.append(plugin.configStore.emptyHeartIcon);
-                }
-            } else {
-                for (int i = 0; i < left; i++) {
-                    style.append(plugin.configStore.filledHeartIcon);
-                }
-            }
-
-            output = replacePlaceholders(output, "usestyle", style.toString());
-        }
+        output = replacePlaceholders(output, "absorption", String.valueOf((int) Compat.getAbsorption(entity)));
 
         HealthSendEvent healthSendEvent = new HealthSendEvent(receiver, entity, output);
         Bukkit.getPluginManager().callEvent(healthSendEvent);
@@ -187,6 +154,59 @@ public class HealthUtil {
             output = healthSendEvent.getMessage();
 
         return output;
+    }
+
+    private String replaceStyle(String output, double health, double maxHealth, LivingEntity entity) {
+        if (!output.contains("usestyle")) return output;
+
+        StringBuilder style = new StringBuilder();
+        int left = getLimitHealth(maxHealth);
+        double heart = maxHealth / getLimitHealth(maxHealth);
+        double halfHeart = heart / 2;
+        double tempHealth = health;
+
+        if (maxHealth != health && health >= 0 && !entity.isDead()) {
+            for (int i = 0; i < getLimitHealth(maxHealth); i++) {
+                if (tempHealth - heart > 0) {
+                    tempHealth = tempHealth - heart;
+
+                    style.append(plugin.configStore.filledHeartIcon);
+                    left--;
+                } else {
+                    break;
+                }
+            }
+
+            if (tempHealth > halfHeart) {
+                style.append(plugin.configStore.filledHeartIcon);
+                left--;
+            } else if (tempHealth > 0 && tempHealth <= halfHeart) {
+                style.append(plugin.configStore.halfHeartIcon);
+                left--;
+            }
+        }
+
+        if (maxHealth != health) {
+            for (int i = 0; i < left; i++) {
+                style.append(plugin.configStore.emptyHeartIcon);
+            }
+        } else {
+            for (int i = 0; i < left; i++) {
+                style.append(plugin.configStore.filledHeartIcon);
+            }
+        }
+
+        // Absorption icons after the health icons, one per heart of absorption.
+        String absorptionIcon = plugin.configStore.absorptionIcon;
+        if (!absorptionIcon.isEmpty()) {
+            double absorption = Compat.getAbsorption(entity);
+            int icons = Math.min((int) Math.ceil(absorption / heart), getLimitHealth(maxHealth));
+            for (int i = 0; i < icons; i++) {
+                style.append(absorptionIcon);
+            }
+        }
+
+        return replacePlaceholders(output, "usestyle", style.toString());
     }
 
     public int getLimitHealth(double maxHealth) {
@@ -278,7 +298,30 @@ public class HealthUtil {
         if (player.hasMetadata("NPC"))
             return;
 
-        actionBar.send(player, ChatColor.translateAlternateColorCodes('&', message));
+        actionBar.send(player, Colors.translate(message));
+        scheduleClear(player);
+    }
+
+    /**
+     * Clears the action bar after "Display Time" ticks. The client otherwise shows it for about 3 seconds.
+     * Each new message restarts the timer, so the bar stays while the player keeps looking at an entity.
+     */
+    private void scheduleClear(Player player) {
+        cancelClear(player.getUniqueId());
+        if (plugin.configStore.displayTime <= 0) return;
+
+        clearTasks.put(player.getUniqueId(), new BukkitRunnable() {
+            public void run() {
+                clearTasks.remove(player.getUniqueId());
+                // A space, not an empty message: some clients reject an empty text component.
+                if (player.isOnline()) actionBar.send(player, " ");
+            }
+        }.runTaskLater(plugin, plugin.configStore.displayTime));
+    }
+
+    public void cancelClear(UUID uuid) {
+        BukkitTask task = clearTasks.remove(uuid);
+        if (task != null) task.cancel();
     }
 
     public boolean isDisabled(Location location) {

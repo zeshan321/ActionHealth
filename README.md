@@ -26,7 +26,12 @@ ActionHealth does not check the server version. It detects which API is availabl
 # Config
 ActionHealth is a very configurable plugin. You can almost change every aspect in the config, including style.
 
-Default config: [Click Here](https://github.com/zeshan321/ActionHealth/blob/master/config.yml)
+- Colors use `&` codes or hex colors as `&#RRGGBB`. Servers before 1.16 show the closest legacy color.
+- The health icons can use PlaceholderAPI placeholders, for example font images.
+- `Absorption Icon` adds one icon per heart of absorption. `{absorption}` shows the absorption health.
+- `Display Time` sets how long the action bar shows, in ticks.
+
+Default config: [Click Here](https://github.com/zeshan321/ActionHealth/blob/master/src/main/resources/config.yml)
 
 # Translations
 [LanguageUtils](https://www.spigotmc.org/resources/1-7-x-1-12-language-utils.8859/) is supported to get the localized name of an entity but if you prefer using your own custom translations, you can use the built in system.

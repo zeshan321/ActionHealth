@@ -4,9 +4,13 @@
 //
 // Scenarios:
 //   look    - Bot1 looks at a cow and gets "Cow: 10/10 ..." ("Show On Look").
+//   hex     - The message color &#4fdfc4 arrives as that hex color (1.16+) or as aqua, the closest legacy color.
+//   absorption - The cow gets 8 absorption health. The bar shows "+8" and 8 absorption icons after the 10 health icons.
 //   damage  - "Show On Look" off and /actionhealth reload, then Bot1 hits the cow and gets "Cow: <10/10".
 //   toggle  - /actionhealth toggle stops the messages.
 //   consume - Action system: Bot1 tags Bot2, Bot2 drinks a regeneration potion, Bot1 gets the CONSUME message.
+//   display-time - With "Display Time: 10", the bar is cleared about 10 ticks after Bot1 looks away.
+//                  Before that, with the default -1, no clear message is sent.
 //
 // With MODE=worldguard (run.sh creates the WorldGuard region "testing_region" around spawn):
 //   region-blocks  - no action bar inside the region, which is in "Disabled regions".
@@ -14,6 +18,7 @@
 //
 // With MODE=placeholderapi (run.sh adds %player_name% to the health message):
 //   placeholderapi - the action bar shows the player name filled in by PlaceholderAPI.
+//   placeholderapi-style - PlaceholderAPI placeholders in the health icons are filled in too.
 // Exit code 0 means every scenario passed.
 //
 // When the server runs ViaBackwards to translate for an older client (VIA=1), the bots
@@ -59,13 +64,16 @@ function createBot (username) {
   const bot = mineflayer.createBot({ host, port: Number(port), username, version: clientVersion, auth: 'offline' })
   bot.actionBars = []
   bot.chatLines = []
-  const record = (text) => bot.actionBars.push({ time: Date.now(), text })
-  bot.on('actionBar', (message) => record(message.toString()))
+  const record = (text, raw) => bot.actionBars.push({ time: Date.now(), text, raw })
+  bot.on('actionBar', (message) => record(message.toString(), JSON.stringify(message.json)))
   bot.on('messagestr', (text, position) => { if (position !== 'game_info') bot.chatLines.push(text) })
   // Fallback for protocol versions with a dedicated action bar packet.
   bot._client.on('packet', (data, meta) => {
     if (meta.name === 'action_bar' || meta.name === 'set_action_bar_text') {
-      try { record(require('prismarine-chat')(bot.registry).fromNotch(data.text).toString()) } catch (e) { record(String(data.text)) }
+      try {
+        const message = require('prismarine-chat')(bot.registry).fromNotch(data.text)
+        record(message.toString(), JSON.stringify(message.json))
+      } catch (e) { record(String(data.text), JSON.stringify(data.text)) }
     }
   })
   if (process.env.VIA === '1') {
@@ -85,13 +93,29 @@ function createBot (username) {
 }
 
 async function waitForBar (bot, since, pattern, timeout) {
+  const match = await waitForBarEntry(bot, since, pattern, timeout)
+  return match ? match.text : null
+}
+
+async function waitForBarEntry (bot, since, pattern, timeout) {
   const end = Date.now() + timeout
   while (Date.now() < end) {
     const match = bot.actionBars.find((bar) => bar.time >= since && pattern.test(bar.text))
-    if (match) return match.text
+    if (match) return match
     await sleep(100)
   }
   return null
+}
+
+// The clear message that "Display Time" sends.
+const isBlank = (bar) => bar.text.trim() === ''
+
+function effectCommands () {
+  if (!versionAtLeast(serverVersion, '1.13')) {
+    const cows = `@e[type=${legacyEntityIds() ? 'Cow' : 'cow'}]`
+    return { give: `effect ${cows} 22 60 1`, clear: `effect ${cows} clear` }
+  }
+  return { give: 'effect give @e[type=minecraft:cow] minecraft:absorption 60 1', clear: 'effect clear @e[type=minecraft:cow]' }
 }
 
 async function waitFor (predicate, timeout) {
@@ -168,8 +192,10 @@ async function placeholderApi () {
   const p = bot1.entity.position
   const since = Date.now()
   await cowInFront(bot1, Math.floor(p.x) + 0.5, Math.floor(p.y), Math.floor(p.z) + 0.5)
-  const bar = await waitForBar(bot1, since, /Cow: 10\/10 Bot1/, 10000)
-  record('placeholderapi', !!bar, bar || 'no "Cow: 10/10 Bot1" action bar, last: ' + lastBars(bot1))
+  const bar = await waitForBar(bot1, since, /Cow: 10\/10 \+0 Bot1/, 10000)
+  record('placeholderapi', !!bar, bar || 'no "Cow: 10/10 +0 Bot1" action bar, last: ' + lastBars(bot1))
+  // run.sh sets "Full Health Icon" to %player_name%.
+  record('placeholderapi-style', !!bar && bar.includes('Bot1Bot1Bot1'), bar || 'no action bar')
   bot1.quit()
 }
 
@@ -182,8 +208,27 @@ async function main () {
   const p = bot1.entity.position
   let since = Date.now()
   const cow = await cowInFront(bot1, Math.floor(p.x) + 0.5, Math.floor(p.y), Math.floor(p.z) + 0.5)
-  let bar = await waitForBar(bot1, since, /Cow: 10\/10/, 10000)
+  const lookBar = await waitForBarEntry(bot1, since, /Cow: 10\/10/, 10000)
+  let bar = lookBar && lookBar.text
   record('look', !!bar, bar || 'no "Cow: 10/10" action bar, last: ' + lastBars(bot1))
+
+  // hex: run.sh starts the health message with &#4fdfc4.
+  // The code must not show as text. That is what the bot gets if the plugin does not translate it.
+  // Before 1.16, some Spigot versions send action bars as legacy text, where \u00a7b is aqua.
+  const hexColor = versionAtLeast(serverVersion, '1.16') ? /"color":"#4fdfc4"/i : /"color":"aqua"|^\{"text":"\u00a7b/
+  record('hex', !!lookBar && hexColor.test(lookBar.raw) && !/4fdfc4/i.test(lookBar.text), lookBar ? lookBar.raw : 'no action bar')
+
+  // absorption
+  const effects = effectCommands()
+  since = Date.now()
+  await command(effects.give)
+  const absorptionBar = await waitForBarEntry(bot1, since, /Cow: 10\/10 \+8 /, 10000)
+  bar = absorptionBar && absorptionBar.text
+  // Count in the raw message: mineflayer's toString stops at a nesting depth that 1.8 messages reach.
+  const icons = absorptionBar ? (absorptionBar.raw.match(/\u2764/g) || []).length : 0
+  record('absorption', !!bar && icons === 18, bar ? `${bar} (${icons} icons, expected 18)` : 'no "+8" action bar, last: ' + lastBars(bot1))
+  await command(effects.clear)
+  await sleep(500)
 
   // damage
   editConfig([['Show On Look: true', 'Show On Look: false']])
@@ -244,13 +289,39 @@ async function main () {
   }
   const held = bot2.heldItem ? bot2.heldItem.name : 'nothing'
   record('consume', !!bar, bar ? `${bar} (damage event: ${damageBar})` : `no CONSUME action bar (Bot2 holds ${held}), last: ` + lastBars(bot1))
-
   bot2.quit()
+
+  // display-time
+  const earlyBlank = bot1.actionBars.find(isBlank)
+  editConfig([['Display Time: -1', 'Display Time: 10'], ['Show On Look: false', 'Show On Look: true']])
+  await command('actionhealth reload')
+  await sleep(1000)
+  const q = bot1.entity.position
+  since = Date.now()
+  await cowInFront(bot1, Math.floor(q.x) + 0.5, Math.floor(q.y), Math.floor(q.z) + 0.5)
+  const seen = await waitForBar(bot1, since, /Cow:/, 10000)
+  // Keep looking for 2 seconds, longer than Display Time. Each health message restarts the timer,
+  // so no clear message may arrive while Bot1 still looks at the cow.
+  await sleep(2000)
+  const blankWhileLooking = bot1.actionBars.find((b) => b.time >= since && isBlank(b))
+  // Yaw 180 faces north, away from the cow.
+  await command(`tp Bot1 ${Math.floor(q.x) + 0.5} ${Math.floor(q.y)} ${Math.floor(q.z) + 0.5} 180 0`)
+  await sleep(3000)
+  const lastCow = bot1.actionBars.filter((b) => /Cow:/.test(b.text)).pop()
+  const cleared = lastCow && bot1.actionBars.find((b) => b.time > lastCow.time && isBlank(b))
+  const delay = cleared ? cleared.time - lastCow.time : null
+  // 10 ticks is 500 ms. Allow for server tick timing.
+  const onTime = delay !== null && delay >= 400 && delay <= 1500
+  record('display-time', !!seen && onTime && !earlyBlank && !blankWhileLooking,
+    earlyBlank ? 'got a clear message while Display Time was -1'
+      : blankWhileLooking ? 'got a clear message while still looking at the cow'
+        : cleared ? `cleared ${delay} ms after the last health message` : 'no clear message, last: ' + lastBars(bot1))
+
   bot1.quit()
 }
 
-const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 1] }
-const [run, expected] = modes[process.env.MODE] || [main, 4]
+const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 2] }
+const [run, expected] = modes[process.env.MODE] || [main, 7]
 run()
   .catch((error) => record('setup', false, error.stack))
   .finally(() => {
