@@ -43,7 +43,9 @@ compat/e2e/integrations.sh   # WorldGuard and PlaceholderAPI
 | --- | --- |
 | look | A bot looks at a cow and gets `Cow: 10/10 ...` (Show On Look). |
 | hex | The message starts with `&#4fdfc4`. The bot gets that hex color on 1.16+, and aqua (the closest legacy color) before 1.16. |
+| health-color | `{healthcolor}` comes before `{health}`. The cow has full health, so `10/10` is green, the `Health Colors` color for 75% and up. |
 | absorption | The cow gets 8 absorption health. The bot gets `+8` from `{absorption}` and 8 absorption icons after the 10 health icons. The absorption API exists from 1.14.4, and older versions read it from the server entity. |
+| decimals | With `Health Decimals: 1`, the bot gets `Cow: 10.0/10.0`. |
 | config-update | `run.sh` removes `Display Time` from the config, as in a config from before 3.7.0. The plugin adds it back at the end of the file, with its comment, and the rest of the file stays the same. |
 | method | The server log names the action bar method that works. With `ACTIONBAR=adventure` (see below), it must be the Adventure API. |
 | damage | Show On Look is turned off with `/actionhealth reload`. The bot hits the cow and gets `Cow: 9/10 ...`. |
@@ -55,6 +57,9 @@ compat/e2e/integrations.sh   # WorldGuard and PlaceholderAPI
 | consume | Action system: Bot1 tags Bot2, Bot2 drinks a regeneration potion, Bot1 gets `Bot2 consumed regen potion!`. The potion name comes from a different API on 1.8, 1.9 to 1.20.1 and 1.20.2+. |
 | action-tags | Bot1 hit Bot2 twice, but gets the consume message once. Before 3.8.1, each hit added a tag, and each tag sent the message. |
 | display-time | With `Display Time: 10`, the bot gets a blank action bar about 10 ticks after it looks away from the cow. It gets no blank action bar while it looks at the cow, or with the default `-1`. |
+| update-check | `run.sh` makes the update check read the version 99.0.0 from a local file, so the test does not depend on spigotmc.org. The server log names the new version. Bot3, an operator, gets the `Update Message` when it joins. |
+| reload-message | Bot3 runs `/actionhealth reload` and gets the `Reload Message`. |
+| default-off | With `Enabled By Default: false`, Bot3 gets no action bar while it looks at a cow. After `/actionhealth toggle`, it gets the action bar. |
 | log | The server log has no ActionHealth errors or warnings. |
 
 `matrix.txt` has 27 Spigot versions: the last release of every minor version from 1.8 to 1.21, plus 26.1.2, 26.2 and 26.3. It also has every NMS revision of 1.8 and 1.9 (the only versions that use NMS), plus extra releases around API changes (1.13, 1.16.1, 1.16.3, 1.20.1, 1.20.4, 1.21.1, 1.21.4). It covers Java 8, 17, 21 and 25. Mineflayer does not support 26.2+ yet, so 26.2 and 26.3 run with ViaVersion and ViaBackwards and a 26.1 client.
@@ -77,24 +82,27 @@ To test a new Minecraft version, add a line to `matrix.txt` and run `matrix.sh`.
 ## Releases
 
 1. Set the new version in `build.gradle`, merge the change and run the full tests.
-2. Push an annotated tag with the version as its name, for example `git tag -a 3.8.0 -F notes.md`. The first line of the message is the title of the release, and the rest is the release text.
+2. Push an annotated tag with the version as its name, for example `git tag -a 3.9.0 --cleanup=verbatim -F notes.md`. The first line of the message is the title of the release, and the rest is the release text. Use `--cleanup=verbatim`: without it, git removes lines that start with `#`, such as `### Fixes`.
 3. The release workflow checks that the tag matches `build.gradle`. Then it builds the jar, runs the linkage check and creates the GitHub release with the jar and its SHA-256. The build is reproducible: the same commit and JDK give the same jar. So the SHA-256 of the release should match the jar that CI built for that commit.
-4. Upload the jar to the Spigot page by hand. Spigot has no API for uploads.
+4. The publish job uploads the same jar and release text to Modrinth and Hangar. Each upload runs only if its secret exists: `MODRINTH_TOKEN` (a Modrinth personal access token with "Create versions") and `HANGAR_TOKEN` (a Hangar API key with "create_version"). Without a secret, the job skips that site and says so. To upload an existing release again, run the Release workflow by hand with the tag. If a site already has the version, the job skips it.
+5. Upload the jar to the Spigot page by hand. Spigot has no API for uploads.
 
 ### Results
 
-| Server | 3.5.9 | 3.8.0 | 3.8.1 |
-| --- | --- | --- | --- |
-| Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass | Pass |
-| Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass | Pass |
-| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass | Pass |
-| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass | Pass |
-| Paper 1.16.5 and 1.21.11 with the Adventure method | Not run | Not run (no Adventure method) | Pass |
-| Folia 1.21.11 and 26.2 | Not run | Pass. Folia does not load 3.7.1 and older, because their plugin.yml does not have `folia-supported: true` | Pass |
-| WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass | Pass, without WorldGuardWrapper |
-| PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass | Pass |
-| ModelEngine R3.1.11 on 1.20.4 | Not run | Pass. 3.7.0 failed the two checks that look up at the body | Pass |
+| Server | 3.5.9 | 3.8.0 | 3.8.1 | 3.9.0 |
+| --- | --- | --- | --- | --- |
+| Spigot 1.8 to 1.16.5 on Java 8 (15 versions) | Fails: does not load (compiled for Java 16) | Pass | Pass | Pass |
+| Spigot 1.17.1 to 1.20.6 (6 versions) | Pass | Pass | Pass | Pass |
+| Spigot 1.21.1 to 26.3 (6 versions) | Fails: no action bar. Every message logs `ClassNotFoundException: net.minecraft.server.<revision>.PacketPlayOutChat` | Pass | Pass | Pass. 26.3 failed 1 of 3 runs, see below |
+| Paper 1.8.8, 1.20.6, 1.21.11 and 26.3 | Not run | Pass | Pass | Pass |
+| Paper 1.16.5 and 1.21.11 with the Adventure method | Not run | Not run (no Adventure method) | Pass | Pass |
+| Folia 1.21.11 and 26.2 | Not run | Pass. Folia does not load 3.7.1 and older, because their plugin.yml does not have `folia-supported: true` | Pass | Pass |
+| WorldGuard 6.1, 6.2.2, 7.0.15, 7.0.19 | Not run | Pass | Pass, without WorldGuardWrapper | Pass |
+| PlaceholderAPI 2.12.3 on 1.8.8 and 26.3 | Not run | Pass | Pass | Pass |
+| ModelEngine R3.1.11 on 1.20.4 | Not run | Pass. 3.7.0 failed the two checks that look up at the body | Pass | Pass |
 
 On Spigot 1.21.11, 3.8.0 fails the new checks method, toggle-message, action-damage and action-tags. 3.8.1 passes them.
+
+3.9.0 adds the checks health-color, decimals, update-check, reload-message and default-off. In the full run, Spigot 26.3 failed consume and action-tags once: Bot2 drank the potion, but Bot1 got no message. Two more runs on 26.3 passed, and 3.9.0 does not change the action code. The cause is not known yet.
 
 3.6.0 failed on Paper 1.20.6. Paper's reflection remapper threw on `getMethod("getName", (Class<?>[]) null)`. 3.6.1 fixes this, and the Paper check is now part of `integrations.sh`.

@@ -48,6 +48,11 @@ public final class ConfigUpdater {
         KEEP_OLD_BEHAVIOR = Collections.unmodifiableMap(values);
     }
 
+    /**
+     * Options whose added value changes what the plugin does. The header of the added options names them.
+     */
+    static final List<String> NEW_BEHAVIOR = Collections.singletonList("Update Check");
+
     private ConfigUpdater() {
     }
 
@@ -118,11 +123,18 @@ public final class ConfigUpdater {
 
         if (added.isEmpty()) return "";
 
+        List<String> changed = new ArrayList<>();
+        for (String key : added) {
+            if (NEW_BEHAVIOR.contains(key)) changed.add(key);
+        }
+
         StringBuilder result = new StringBuilder();
         if (current.length() > 0 && !current.endsWith("\n")) result.append(newline);
         result.append(newline)
                 .append("# Options added by ActionHealth ").append(version)
-                .append(". Their values give the same result as before the update.").append(newline)
+                .append(changed.isEmpty() ? ". Their values give the same result as before the update."
+                        : ". Their values give the same result as before the update, except " + String.join(", ", changed) + ".")
+                .append(newline)
                 .append(text);
         return result.toString();
     }

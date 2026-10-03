@@ -11,6 +11,8 @@
 # PlaceholderAPI jar). MODE=modelengine runs the custom model test (pass the ModelEngine jar).
 # ACTIONBAR makes the plugin start with that action bar method (the system property
 # actionhealth.actionbar), to test a method that the server would not use first.
+# The update check reads the version 99.0.0 from a local file (the system property
+# actionhealth.updateurl), so the test does not depend on spigotmc.org.
 #
 # Exit code 0 means the server started, the plugin enabled, every scenario passed and the
 # log has no ActionHealth errors. Server files: compat/e2e/runs/<server>-<plugin>-<time>/.
@@ -38,13 +40,13 @@ for extra in "$@"; do
   case "$(basename "$extra")" in Via*) VIA=1 ;; esac
 done
 
-# Default config with health numbers, the last damage and a hex color in the message, so the
-# test can read them. "Display Time" is removed, as in a config from before 3.7.0: the plugin
+# Default config with health numbers, the last damage, the health color and a hex color in the
+# message, so the test can read them. "Display Time" is removed, as in a config from before 3.7.0: the plugin
 # must add it back.
 STYLE='{usestyle}'
 ICON='"\&4\\u2764"'
 if [ "${MODE:-}" = placeholderapi ]; then STYLE='%player_name% {usestyle}'; ICON='"%player_name%"'; fi
-sed -e "s/^Health Message: .*/Health Message: '\&#4fdfc4\&l{name}: {health}\/{maxhealth} +{absorption} $STYLE d{opponentlastdamage}'/" \
+sed -e "s/^Health Message: .*/Health Message: '\&#4fdfc4\&l{name}: {healthcolor}{health}\/{maxhealth} +{absorption} $STYLE d{opponentlastdamage}'/" \
   -e "s/^Full Health Icon: .*/Full Health Icon: $ICON/" \
   -e "/^Display Time: /d" \
   "$DIR/../../src/main/resources/config.yml" > "$RUN/plugins/ActionHealth/config.yml"
@@ -91,7 +93,8 @@ if [ "${MODE:-}" = modelengine ]; then
   cp "$DIR/fixtures/bigmob.bbmodel" "$RUN/plugins/ModelEngine/blueprints/"
 fi
 
-PROPERTY=${ACTIONBAR:+-Dactionhealth.actionbar=$ACTIONBAR}
+echo 99.0.0 > "$RUN/latest.txt"
+PROPERTY="-Dactionhealth.updateurl=file:/srv/latest.txt${ACTIONBAR:+ -Dactionhealth.actionbar=$ACTIONBAR}"
 docker run -d --name "$NAME" -e PROPERTY="$PROPERTY" \
   -v "$RUN:/srv" -v "$SPIGOT:/server.jar:ro" -w /srv "ah-jdk$JAVA" \
   sh -c 'tail -n 0 -F console.in | java -Xms512m -Xmx1536m $PROPERTY -DIReallyKnowWhatIAmDoingISwear -jar /server.jar nogui' > /dev/null

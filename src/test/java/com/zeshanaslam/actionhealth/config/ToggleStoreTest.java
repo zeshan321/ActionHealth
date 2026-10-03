@@ -98,6 +98,61 @@ class ToggleStoreTest {
         assertTrue(store.isToggled(PLAYER));
     }
 
+    @Test
+    void offByDefaultTurnsActionHealthOffForPlayersWithoutAChoice() {
+        ToggleStore store = new ToggleStore(folder, LOGGER);
+        store.setEnabledByDefault(false);
+        assertTrue(store.isToggled(PLAYER));
+
+        store.setToggled(PLAYER, false, false);
+        assertFalse(store.isToggled(PLAYER));
+        assertTrue(store.isToggled(OTHER));
+    }
+
+    @Test
+    void forgettingAPlayerGivesThemTheDefaultAgain() {
+        ToggleStore store = new ToggleStore(folder, LOGGER);
+        store.setEnabledByDefault(false);
+        store.setToggled(PLAYER, false, false);
+        store.forget(PLAYER);
+        assertTrue(store.isToggled(PLAYER));
+    }
+
+    @Test
+    void remembersAPlayerWhoTurnedItOn() {
+        ToggleStore store = new ToggleStore(folder, LOGGER);
+        store.setEnabledByDefault(false);
+        store.setToggled(PLAYER, false, true);
+
+        ToggleStore restarted = new ToggleStore(folder, LOGGER);
+        restarted.setEnabledByDefault(false);
+        restarted.load(true);
+        assertFalse(restarted.isToggled(PLAYER));
+        assertTrue(restarted.isToggled(OTHER));
+    }
+
+    @Test
+    void changingTheDefaultKeepsSavedChoices() {
+        ToggleStore store = new ToggleStore(folder, LOGGER);
+        store.setToggled(PLAYER, true, true);
+        store.setToggled(OTHER, false, true);
+
+        ToggleStore restarted = new ToggleStore(folder, LOGGER);
+        restarted.setEnabledByDefault(false);
+        restarted.load(true);
+        assertTrue(restarted.isToggled(PLAYER));
+        assertFalse(restarted.isToggled(OTHER));
+    }
+
+    @Test
+    void aPlayerInBothListsCountsAsOff() throws IOException {
+        write(new File(folder, "toggles.yml"), "toggled:\n- " + PLAYER + "\nenabled:\n- " + PLAYER + "\n");
+
+        ToggleStore store = new ToggleStore(folder, LOGGER);
+        store.load(true);
+        assertTrue(store.isToggled(PLAYER));
+    }
+
     private static void write(File file, String text) throws IOException {
         Files.write(file.toPath(), text.getBytes(StandardCharsets.UTF_8));
     }

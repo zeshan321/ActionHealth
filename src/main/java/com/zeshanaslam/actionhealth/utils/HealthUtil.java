@@ -156,12 +156,16 @@ public class HealthUtil {
             output = placeholderSupport.setPlaceholderAPI(receiver, output);
         }
 
+        int decimals = plugin.configStore.healthDecimals;
+        boolean alive = !entity.isDead();
+        int percent = HealthFormat.percent(health, maxHealth, alive);
         output = replacePlaceholders(output, "name", name);
-        output = replacePlaceholders(output, "health", String.valueOf((int) health));
-        output = replacePlaceholders(output, "maxhealth", String.valueOf((int) maxHealth));
-        output = replacePlaceholders(output, "percenthealth", String.valueOf((int) ((health / maxHealth) * 100.0)));
-        output = replacePlaceholders(output, "opponentlastdamage", String.valueOf((int) getLastDamage(entity)));
-        output = replacePlaceholders(output, "absorption", String.valueOf((int) Compat.getAbsorption(entity)));
+        output = replacePlaceholders(output, "healthcolor", HealthFormat.color(percent, plugin.configStore.healthColors));
+        output = replacePlaceholders(output, "health", HealthFormat.health(health, decimals, alive));
+        output = replacePlaceholders(output, "maxhealth", HealthFormat.number(maxHealth, decimals));
+        output = replacePlaceholders(output, "percenthealth", String.valueOf(percent));
+        output = replacePlaceholders(output, "opponentlastdamage", HealthFormat.number(getLastDamage(entity), decimals));
+        output = replacePlaceholders(output, "absorption", HealthFormat.number(Compat.getAbsorption(entity), decimals));
 
         HealthSendEvent healthSendEvent = new HealthSendEvent(receiver, entity, output);
         Bukkit.getPluginManager().callEvent(healthSendEvent);

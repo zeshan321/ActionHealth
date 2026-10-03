@@ -8,6 +8,7 @@ import com.zeshanaslam.actionhealth.config.ConfigStore;
 import com.zeshanaslam.actionhealth.config.ConfigUpdater;
 import com.zeshanaslam.actionhealth.config.ToggleStore;
 import com.zeshanaslam.actionhealth.events.HealthListeners;
+import com.zeshanaslam.actionhealth.support.UpdateChecker;
 import com.zeshanaslam.actionhealth.utils.HealthUtil;
 import com.zeshanaslam.actionhealth.utils.Scheduler;
 import org.bstats.bukkit.Metrics;
@@ -29,6 +30,7 @@ public class Main extends JavaPlugin {
     public Scheduler.Task actionTask;
     public Metrics metrics;
     public ToggleStore toggles;
+    public UpdateChecker updateChecker;
 
     @Override
     public void onEnable() {
@@ -39,9 +41,12 @@ public class Main extends JavaPlugin {
         this.healthUtil = new HealthUtil(this);
         toggles = new ToggleStore(getDataFolder(), getLogger());
 
+        updateChecker = new UpdateChecker(this);
+
         // Load config settings
         configStore = new ConfigStore(this);
         toggles.load(configStore.rememberToggle);
+        applySettings();
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new HealthListeners(this), this);
@@ -75,6 +80,15 @@ public class Main extends JavaPlugin {
     public void onDisable() {
         if (lookTask != null) lookTask.cancel();
         if (actionTask != null) actionTask.cancel();
+        if (updateChecker != null) updateChecker.setEnabled(false);
+    }
+
+    /**
+     * Applies the settings that other parts of the plugin keep, after the config is loaded or reloaded.
+     */
+    public void applySettings() {
+        toggles.setEnabledByDefault(configStore.enabledByDefault);
+        updateChecker.setEnabled(configStore.updateCheck);
     }
 
     /**

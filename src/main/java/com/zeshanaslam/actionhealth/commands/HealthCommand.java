@@ -2,7 +2,7 @@ package com.zeshanaslam.actionhealth.commands;
 
 import com.zeshanaslam.actionhealth.Main;
 import com.zeshanaslam.actionhealth.config.ConfigStore;
-import org.bukkit.ChatColor;
+import com.zeshanaslam.actionhealth.utils.Colors;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -38,7 +38,8 @@ public class HealthCommand implements TabExecutor {
             plugin.updateConfig();
             plugin.configStore = new ConfigStore(plugin);
             plugin.toggles.load(plugin.configStore.rememberToggle);
-            sender.sendMessage(ChatColor.RED + "ActionHealth " + ChatColor.GRAY + "has been reloaded!");
+            plugin.applySettings();
+            send(sender, plugin.configStore.reloadMessage);
             return true;
         }
 
@@ -58,13 +59,13 @@ public class HealthCommand implements TabExecutor {
             plugin.toggles.setToggled(player.getUniqueId(), off, plugin.configStore.rememberToggle);
 
             String message = off ? plugin.configStore.disableMessage : plugin.configStore.enableMessage;
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.healthUtil.replacePlaceholders(message, "name", player.getName())));
+            send(player, plugin.healthUtil.replacePlaceholders(message, "name", player.getName()));
             return true;
         }
 
-        sender.sendMessage(ChatColor.RED + "ActionHealth Commands:");
-        sender.sendMessage(ChatColor.GRAY + "/" + label + " reload");
-        sender.sendMessage(ChatColor.GRAY + "/" + label + " toggle");
+        for (String line : plugin.configStore.helpMessage) {
+            send(sender, plugin.healthUtil.replacePlaceholders(line, "label", label));
+        }
         return true;
     }
 
@@ -80,9 +81,15 @@ public class HealthCommand implements TabExecutor {
     }
 
     private void sendNoPermission(CommandSender sender) {
-        String message = plugin.configStore.noPermissionMessage;
+        send(sender, plugin.configStore.noPermissionMessage);
+    }
+
+    /**
+     * Sends a message from the config, with its colors. An empty message is not sent.
+     */
+    private static void send(CommandSender sender, String message) {
         if (message != null && !message.isEmpty()) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+            sender.sendMessage(Colors.translate(message));
         }
     }
 }

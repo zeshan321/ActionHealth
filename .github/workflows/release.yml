@@ -1,18 +1,36 @@
 name: Release
 
 # Push an annotated tag that matches the version in build.gradle, for example:
-#   git tag -a 3.8.0 -F notes.md && git push origin 3.8.0
+#   git tag -a 3.9.0 --cleanup=verbatim -F notes.md && git push origin 3.9.0
 # The first line of the tag message is the release title. The rest is the release text.
+# --cleanup=verbatim keeps lines that start with "#", such as "### Fixes". Without it, git
+# removes them as comments.
+#
+# After the GitHub release, the publish job uploads the same jar to Modrinth and Hangar. Each
+# upload runs only if its repository secret exists: MODRINTH_TOKEN (a Modrinth personal access
+# token with "Create versions") and HANGAR_TOKEN (a Hangar API key with "create_version").
+# To upload an existing release again, for example after adding a secret, run this workflow
+# by hand with the tag.
 on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to upload to Modrinth and Hangar, for example 3.9.0
+        required: true
 
 permissions:
   contents: write
 
+# The Minecraft versions that the release was tested on, for the Modrinth and Hangar listings.
+env:
+  MINECRAFT_VERSIONS: 1.8-26.3
+
 jobs:
   release:
+    if: github.event_name == 'push'
     # A fixed image, so a new Ubuntu version can not change the test servers without a commit.
     runs-on: ubuntu-24.04
     steps:
@@ -59,3 +77,37 @@ jobs:
           tail -n +3 message.md > notes.md
           printf '\nSHA-256 of %s: `%s`\n' "$(basename "$jar")" "$(sha256sum "$jar" | cut -d ' ' -f 1)" >> notes.md
           gh release create "$GITHUB_REF_NAME" "$jar" --title "$title" --notes-file notes.md --verify-tag
+
+  publish:
+    needs: release
+    # Also for a run by hand, where the release job is skipped.
+    if: always() && (needs.release.result == 'success' || (github.event_name == 'workflow_dispatch' && needs.release.result == 'skipped'))
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      HANGAR_TOKEN: ${{ secrets.HANGAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The jar from the GitHub release, so all three sites have the same file.
+      - name: Download the release
+        run: |
+          gh release download "$TAG" --pattern 'ActionHealth-*-all.jar' --dir release
+          gh release view "$TAG" --json name --jq .name > release/title.txt
+          gh release view "$TAG" --json body --jq .body > release/notes.md
+
+      - name: Upload to Modrinth
+        if: env.MODRINTH_TOKEN != ''
+        run: .github/scripts/publish-modrinth.sh "$TAG" release/ActionHealth-*-all.jar "$(cat release/title.txt)" release/notes.md
+
+      - name: Upload to Hangar
+        if: env.HANGAR_TOKEN != ''
+        run: .github/scripts/publish-hangar.sh "$TAG" release/ActionHealth-*-all.jar release/notes.md
+
+      - name: Report skipped uploads
+        if: env.MODRINTH_TOKEN == '' || env.HANGAR_TOKEN == ''
+        run: |
+          [ -n "$MODRINTH_TOKEN" ] || echo "::notice::No MODRINTH_TOKEN secret, so the release was not uploaded to Modrinth."
+          [ -n "$HANGAR_TOKEN" ] || echo "::notice::No HANGAR_TOKEN secret, so the release was not uploaded to Hangar."
