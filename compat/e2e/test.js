@@ -19,6 +19,14 @@
 // With MODE=placeholderapi (run.sh adds %player_name% to the health message):
 //   placeholderapi - the action bar shows the player name filled in by PlaceholderAPI.
 //   placeholderapi-style - PlaceholderAPI placeholders in the health icons are filled in too.
+//
+// With MODE=modelengine (run.sh adds the test model fixtures/bigmob.bbmodel: a hitbox 3 blocks wide
+// and 4 blocks high, with the body at the top):
+//   model-look-level - Bot1 looks straight ahead at the model from 4 blocks and gets "Cow: 10/10".
+//   model-look-body  - Bot1 looks up at the body from 4 blocks (40 degrees up) and gets the action bar.
+//   model-look-far   - Bot1 looks up at the body from 7 blocks (20 degrees up) and gets the action bar.
+//   model-look-over  - Bot1 looks over the model (80 degrees up) and gets no action bar.
+//   model-hit        - Bot1 hits the hitbox entity that ModelEngine shows and gets "Cow: <10/10".
 // Exit code 0 means every scenario passed.
 //
 // When the server runs ViaBackwards to translate for an older client (VIA=1), the bots
@@ -199,6 +207,54 @@ async function placeholderApi () {
   bot1.quit()
 }
 
+async function modelEngine () {
+  await command('gamerule doMobSpawning false')
+  // ModelEngine imports the model after the server starts.
+  const log = path.join(serverDir, 'logs', 'latest.log')
+  const imported = await waitFor(() => fs.readFileSync(log, 'utf8').includes('Resource pack zipped'), 60000)
+  if (!imported) throw new Error('ModelEngine did not import the test model')
+  const bot1 = await createBot('Bot1')
+  await sleep(2000)
+  await command('op Bot1')
+  const p = bot1.entity.position
+  const x = Math.floor(p.x) + 0.5
+  const y = Math.floor(p.y)
+  const z = Math.floor(p.z) + 0.5
+  // /meg summon <model> <type> spawns the model at the player, as a MythicMobs "model" skill does.
+  bot1.chat('/meg summon bigmob cow')
+  await sleep(2000)
+  await command('execute as @e[type=minecraft:cow] run data merge entity @s {NoAI:1b}')
+  await command(`tp @e[type=minecraft:cow] ${x} ${y} ${z}`)
+
+  // Yaw 180 faces north, toward the model. A negative pitch looks up.
+  async function look (name, distance, pitch, expected, detail) {
+    await command(`tp Bot1 ${x} ${y} ${z + distance} 180 ${pitch}`)
+    // Let the server apply the teleport before reading new messages.
+    await sleep(500)
+    const since = Date.now()
+    const bar = await waitForBar(bot1, since, /Cow: 10\/10/, expected ? 5000 : 2500)
+    record(name, !!bar === expected, bar ? `${detail}: ${bar}` : `${detail}: no action bar`)
+  }
+  await look('model-look-level', 4, 0, true, 'level from 4 blocks')
+  await look('model-look-body', 4, -40, true, '40 degrees up from 4 blocks')
+  await look('model-look-far', 7, -20, true, '20 degrees up from 7 blocks')
+  await look('model-look-over', 4, -80, false, '80 degrees up from 4 blocks')
+
+  // The client does not see the cow, only the model and a hitbox entity. ModelEngine sends a hit
+  // on the hitbox entity to the cow.
+  editConfig([['Show On Look: true', 'Show On Look: false']])
+  await command('actionhealth reload')
+  await command(`tp Bot1 ${x} ${y} ${z + 2.5} 180 0`)
+  await sleep(1500)
+  const hitbox = bot1.nearestEntity((e) => e !== bot1.entity && e.type !== 'player' && e.name !== 'armor_stand')
+  if (!hitbox) throw new Error('Bot1 can not see a hitbox entity')
+  const since = Date.now()
+  bot1.attack(hitbox)
+  const bar = await waitForBar(bot1, since, /Cow: [0-9]\/10/, 5000)
+  record('model-hit', !!bar, bar ? `hit ${hitbox.name || 'entity'} ${hitbox.id}: ${bar}` : 'no "Cow: <10/10" action bar, last: ' + lastBars(bot1))
+  bot1.quit()
+}
+
 async function main () {
   await command('gamerule doMobSpawning false')
   const bot1 = await createBot('Bot1')
@@ -320,7 +376,7 @@ async function main () {
   bot1.quit()
 }
 
-const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 2] }
+const modes = { worldguard: [worldGuard, 2], placeholderapi: [placeholderApi, 2], modelengine: [modelEngine, 5] }
 const [run, expected] = modes[process.env.MODE] || [main, 7]
 run()
   .catch((error) => record('setup', false, error.stack))

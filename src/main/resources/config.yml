@@ -100,6 +100,7 @@ Blacklist:
 Whitelist: []
 
 # Show the health of the entity that the player is looking at.
+# On 1.13.2+, looking at any part of the hitbox counts. This includes large mobs and ModelEngine models.
 Show On Look: true
 Look Distance: 10
 
