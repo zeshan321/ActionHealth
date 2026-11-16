@@ -34,6 +34,10 @@ public class HealthUtil {
     // Weak keys: an entry goes away when the server removes the entity.
     private final Map<Entity, Double> lastDamage = Collections.synchronizedMap(new WeakHashMap<>());
     private final Map<Class<?>, Optional<Method>> getNameMethods = new ConcurrentHashMap<>();
+    private static boolean citizensChecked = false;
+    private static Method getNpcRegistryMethod = null;
+    private static Method getNpcMethod = null;
+    private static Method getFullNameMethod = null;
 
     /**
      * The client shows an action bar for about 3 seconds and fades it in the last second.
@@ -125,7 +129,9 @@ public class HealthUtil {
             String displayName;
             Player player = (Player) entity;
 
-            if (player.getDisplayName() == null) {
+            if (entity.hasMetadata("NPC")) {
+                displayName = name;
+            } else if (player.getDisplayName() == null) {
                 displayName = name;
             } else {
                 displayName = player.getDisplayName();
@@ -203,6 +209,16 @@ public class HealthUtil {
     public String getName(LivingEntity entity, Player receiver) {
         String name;
 
+        if (entity.hasMetadata("NPC")) {
+            String npcName = getCitizensNpcName(entity);
+            if (npcName != null && !npcName.isEmpty()) {
+                name = npcName;
+                if (plugin.configStore.translate.containsKey(name))
+                    name = plugin.configStore.translate.get(name);
+                return name;
+            }
+        }
+
         // Supporting mcmmo health bar to get to display correct name.
         List<MetadataValue> metadataValues = entity.getMetadata("mcMMO_oldName");
         List<MetadataValue> metadataValuesOld = entity.getMetadata("mcMMO: Custom Name");
@@ -232,6 +248,35 @@ public class HealthUtil {
 
         return name;
     }
+
+    private String getCitizensNpcName(LivingEntity entity) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
+            return null;
+        }
+        try {
+            if (!citizensChecked) {
+                citizensChecked = true;
+                Class<?> citizensApiClass = Class.forName("net.citizensnpcs.api.CitizensAPI");
+                getNpcRegistryMethod = citizensApiClass.getMethod("getNPCRegistry");
+                Class<?> registryClass = Class.forName("net.citizensnpcs.api.npc.NPCRegistry");
+                getNpcMethod = registryClass.getMethod("getNPC", Entity.class);
+                Class<?> npcClass = Class.forName("net.citizensnpcs.api.npc.NPC");
+                getFullNameMethod = npcClass.getMethod("getFullName");
+            }
+            if (getNpcRegistryMethod != null && getNpcMethod != null && getFullNameMethod != null) {
+                Object registry = getNpcRegistryMethod.invoke(null);
+                Object npc = getNpcMethod.invoke(registry, entity);
+                if (npc != null) {
+                    String fullName = (String) getFullNameMethod.invoke(npc);
+                    return fullName != null ? org.bukkit.ChatColor.translateAlternateColorCodes('&', fullName) : null;
+                }
+
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
 
     public String replacePlaceholders(String s, String key, String value) {
         return s.replace("{" + key + "}", value).replace("{ah" + key + "}", value);
